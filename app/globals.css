@@ -1,24 +1,51 @@
 
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-* {
+:root {
+  --page-bg: #f5eef1;
+  --surface: #fffdfc;
+  --burgundy: #781f3b;
+  --burgundy-dark: #58152b;
+  --burgundy-light: #f3e3e9;
+  --text-main: #35252c;
+  --text-muted: #81717a;
+  --border: #e8dce1;
+  --accent: #d4a9b8;
+}
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+  font-family: "Manrope", sans-serif;
+  font-style: normal !important;
 }
 
 html {
   -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
 }
 
 body {
   min-height: 100vh;
+  margin: 0;
+  background: var(--page-bg);
+  color: var(--text-main);
+  font-family: "Manrope", sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
 }
 
 button,
 input,
 select,
 textarea {
+  max-width: 100%;
+  min-width: 0;
   font: inherit;
 }
 
@@ -29,11 +56,144 @@ button {
 input,
 select,
 textarea {
-  max-width: 100%;
+  width: 100%;
 }
 
+input[type="date"] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding-right: 8px;
+  overflow: hidden;
+  color: var(--text-main);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+main,
+section,
+article,
+form,
+label,
+.grid,
+.flex {
+  min-width: 0;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--burgundy);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: #e9ccd7;
+  color: var(--burgundy-dark);
+}
+
+/* Отчёт не виден в обычном интерфейсе */
+.print-only {
+  display: none !important;
+}
+
+.no-print {
+  display: block;
+}
+
+/* Компактная печатная версия отчёта */
 @media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  html,
   body {
+    width: 100%;
+    min-height: auto;
+    margin: 0;
     background: #ffffff !important;
+    color: #222222 !important;
+    font-family: "Manrope", sans-serif;
+    font-size: 10pt;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only,
+  .print-only * {
+    visibility: visible;
+  }
+
+  .print-only {
+    display: block !important;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    padding: 0;
+    color: #222222;
+    background: #ffffff;
+  }
+
+  .print-only h1 {
+    margin: 0 0 6px;
+    color: #781f3b;
+    font-size: 23pt;
+  }
+
+  .print-only h2 {
+    margin: 0 0 12px;
+    font-size: 15pt;
+  }
+
+  .print-only h3 {
+    margin: 18px 0 8px;
+    font-size: 12pt;
+  }
+
+  .print-only table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 16px;
+    font-size: 9pt;
+  }
+
+  .print-only th,
+  .print-only td {
+    padding: 7px;
+    border: 1px solid #dedede;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .print-only th {
+    background: #f4e9ed !important;
+    color: #58152b;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-only .print-footer {
+    margin-top: 24px;
+    color: #666666;
+    font-size: 8pt;
   }
 }
