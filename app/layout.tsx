@@ -23,8 +23,8 @@ export default function RootLayout({
       <body
         style={{
           margin: 0,
-          fontFamily: "Arial, sans-serif",
-          background: "#fff8ef",
+          fontFamily: "Manrope, sans-serif",
+          background: "#f5eef1",
           color: "#30211c",
         }}
       >
