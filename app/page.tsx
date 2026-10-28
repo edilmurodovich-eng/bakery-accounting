@@ -14,8 +14,9 @@ import {
   TrendingUp,
   ReceiptText,
   Wheat,
-  ChevronRight,
   CircleDollarSign,
+  Flame,
+  Search,
 } from "lucide-react";
 
 type Unit = "g" | "kg" | "pcs";
@@ -53,6 +54,12 @@ type Expense = {
   amount: number;
 };
 
+type Recipe = {
+  name: string;
+  yieldCount: string;
+  ingredients: Omit<Ingredient, "id">[];
+};
+
 const money = (value: number) =>
   new Intl.NumberFormat("ru-RU", {
     maximumFractionDigits: 0,
@@ -63,20 +70,93 @@ const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
-const unitNames: Record<Unit, string> = {
-  g: "г",
-  kg: "кг",
-  pcs: "шт.",
-};
-
 const field =
-  "w-full min-w-0 rounded-xl border border-[#e8dfd3] bg-white px-3 py-3 text-base text-[#392820] outline-none transition placeholder:text-[#ad9e91] focus:border-[#8b3946] focus:ring-2 focus:ring-[#8b3946]/10";
+  "block w-full min-w-0 max-w-full box-border rounded-xl border border-[#e8dce1] bg-white px-3 py-3 text-base text-[#35252c] outline-none transition placeholder:text-[#ad9eaa] focus:border-[#781f3b] focus:ring-2 focus:ring-[#781f3b]/10";
 
 const buttonPrimary =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#6e2635] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#54202b] active:scale-[0.98] disabled:opacity-40";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#781f3b] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#58152b] active:scale-[0.98] disabled:opacity-40";
 
 const buttonSecondary =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#e8dfd3] bg-white px-4 py-3 text-sm font-semibold text-[#503b30] transition hover:bg-[#faf5ee]";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#e8dce1] bg-white px-4 py-3 text-sm font-semibold text-[#50343f] transition hover:bg-[#faf3f6]";
+
+const recipes: Recipe[] = [
+  {
+    name: "Наполеон",
+    yieldCount: "10",
+    ingredients: [
+      { name: "Мука", amount: "600", unit: "g", price: "10000" },
+      { name: "Сливочное масло", amount: "300", unit: "g", price: "90000" },
+      { name: "Яйца", amount: "2", unit: "pcs", price: "2000" },
+      { name: "Молоко", amount: "1000", unit: "g", price: "12000" },
+      { name: "Сахар", amount: "250", unit: "g", price: "15000" },
+      { name: "Крахмал", amount: "50", unit: "g", price: "25000" },
+    ],
+  },
+  {
+    name: "Медовик",
+    yieldCount: "10",
+    ingredients: [
+      { name: "Мука", amount: "500", unit: "g", price: "10000" },
+      { name: "Мёд", amount: "150", unit: "g", price: "60000" },
+      { name: "Сахар", amount: "200", unit: "g", price: "15000" },
+      { name: "Яйца", amount: "3", unit: "pcs", price: "2000" },
+      { name: "Сливочное масло", amount: "100", unit: "g", price: "90000" },
+      { name: "Сметана", amount: "600", unit: "g", price: "30000" },
+    ],
+  },
+  {
+    name: "Бисквитный торт",
+    yieldCount: "8",
+    ingredients: [
+      { name: "Мука", amount: "200", unit: "g", price: "10000" },
+      { name: "Сахар", amount: "200", unit: "g", price: "15000" },
+      { name: "Яйца", amount: "6", unit: "pcs", price: "2000" },
+      { name: "Сливки", amount: "400", unit: "g", price: "65000" },
+    ],
+  },
+  {
+    name: "Печенье",
+    yieldCount: "20",
+    ingredients: [
+      { name: "Мука", amount: "400", unit: "g", price: "10000" },
+      { name: "Сахар", amount: "150", unit: "g", price: "15000" },
+      { name: "Сливочное масло", amount: "150", unit: "g", price: "90000" },
+      { name: "Яйца", amount: "2", unit: "pcs", price: "2000" },
+    ],
+  },
+  {
+    name: "Булочки",
+    yieldCount: "12",
+    ingredients: [
+      { name: "Мука", amount: "1000", unit: "g", price: "10000" },
+      { name: "Молоко", amount: "400", unit: "g", price: "12000" },
+      { name: "Сахар", amount: "100", unit: "g", price: "15000" },
+      { name: "Яйца", amount: "2", unit: "pcs", price: "2000" },
+      { name: "Дрожжи", amount: "15", unit: "g", price: "50000" },
+      { name: "Сливочное масло", amount: "100", unit: "g", price: "90000" },
+    ],
+  },
+  {
+    name: "Хлеб",
+    yieldCount: "2",
+    ingredients: [
+      { name: "Мука", amount: "1000", unit: "g", price: "10000" },
+      { name: "Дрожжи", amount: "10", unit: "g", price: "50000" },
+      { name: "Соль", amount: "20", unit: "g", price: "5000" },
+      { name: "Сахар", amount: "20", unit: "g", price: "15000" },
+    ],
+  },
+  {
+    name: "Самса",
+    yieldCount: "10",
+    ingredients: [
+      { name: "Мука", amount: "700", unit: "g", price: "10000" },
+      { name: "Мясо", amount: "600", unit: "g", price: "90000" },
+      { name: "Лук", amount: "300", unit: "g", price: "5000" },
+      { name: "Растительное масло", amount: "100", unit: "g", price: "25000" },
+    ],
+  },
+];
 
 function SectionTitle({
   eyebrow,
@@ -89,13 +169,13 @@ function SectionTitle({
 }) {
   return (
     <div className="mb-6">
-      <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#986b57]">
+      <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#986b7b]">
         {eyebrow}
       </p>
-      <h2 className="text-2xl font-bold tracking-tight text-[#392820] sm:text-3xl">
+      <h2 className="text-2xl font-bold tracking-tight text-[#35252c] sm:text-3xl">
         {title}
       </h2>
-      <p className="mt-2 text-sm leading-6 text-[#8b796d]">{description}</p>
+      <p className="mt-2 text-sm leading-6 text-[#81717a]">{description}</p>
     </div>
   );
 }
@@ -112,8 +192,8 @@ function StatCard({
   tone?: "cream" | "burgundy" | "green";
 }) {
   const styles = {
-    cream: "bg-[#f7eee2] text-[#5a4032]",
-    burgundy: "bg-[#6e2635] text-white",
+    cream: "bg-[#f1e5ea] text-[#583444]",
+    burgundy: "bg-[#781f3b] text-white",
     green: "bg-[#e8f1e8] text-[#365b40]",
   };
 
@@ -145,6 +225,8 @@ export default function Home() {
   const [manualCost, setManualCost] = useState("");
   const [productName, setProductName] = useState("");
   const [sellingPrice, setSellingPrice] = useState("");
+  const [utilityCost, setUtilityCost] = useState("0");
+  const [recipeSearch, setRecipeSearch] = useState("");
 
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -162,7 +244,6 @@ export default function Home() {
   const [period, setPeriod] = useState<Period>("today");
   const [fromDate, setFromDate] = useState(today());
   const [toDate, setToDate] = useState(today());
-
   const [notice, setNotice] = useState("");
 
   const ingredientTotal = useMemo(
@@ -170,17 +251,17 @@ export default function Home() {
       ingredients.reduce((sum, item) => {
         const amount = Math.max(0, Number(item.amount) || 0);
         const price = Math.max(0, Number(item.price) || 0);
-
-        if (item.unit === "g") return sum + (amount / 1000) * price;
-        return sum + amount * price;
+        return sum + (item.unit === "g" ? amount / 1000 * price : amount * price);
       }, 0),
     [ingredients]
   );
 
+  const totalBatchCost = ingredientTotal + Math.max(0, Number(utilityCost) || 0);
+
   const calculatedCost =
     manualCost.trim() !== "" && Number(manualCost) >= 0
       ? Number(manualCost)
-      : ingredientTotal / Math.max(1, Number(yieldCount) || 1);
+      : totalBatchCost / Math.max(1, Number(yieldCount) || 1);
 
   const filteredSales = useMemo(
     () =>
@@ -206,42 +287,63 @@ export default function Home() {
     (sum, sale) => sum + sale.price * sale.quantity,
     0
   );
-
   const goodsCost = filteredSales.reduce(
     (sum, sale) => sum + sale.cost * sale.quantity,
     0
   );
-
   const expenseTotal = filteredExpenses.reduce(
     (sum, expense) => sum + expense.amount,
     0
   );
-
   const profit = revenue - goodsCost - expenseTotal;
 
-  function updateIngredient(
-    id: number,
-    key: keyof Ingredient,
-    value: string
-  ) {
+  function updateIngredient(id: number, key: keyof Ingredient, value: string) {
     setIngredients((current) =>
-      current.map((item) =>
-        item.id === id ? { ...item, [key]: value } : item
-      )
+      current.map((item) => item.id === id ? { ...item, [key]: value } : item)
     );
   }
 
   function addIngredient() {
     setIngredients((current) => [
       ...current,
-      {
-        id: Date.now(),
-        name: "",
-        amount: "",
-        unit: "g",
-        price: "",
-      },
+      { id: Date.now(), name: "", amount: "", unit: "g", price: "" },
     ]);
+  }
+
+  function applyRecipe(recipe: Recipe) {
+    setIngredients(
+      recipe.ingredients.map((item, index) => ({
+        ...item,
+        id: Date.now() + index,
+      }))
+    );
+    setProductName(recipe.name);
+    setYieldCount(recipe.yieldCount);
+    setManualCost("");
+    setRecipeSearch(recipe.name);
+    setNotice(`Загружен пример рецепта «${recipe.name}». Проверьте количества и цены.`);
+  }
+
+  function handleProductNameChange(value: string) {
+    setProductName(value);
+
+    const normalized = value.trim().toLocaleLowerCase("ru");
+    const match = recipes.find(
+      (recipe) => recipe.name.toLocaleLowerCase("ru") === normalized
+    );
+
+    if (match) {
+      setIngredients(
+        match.ingredients.map((item, index) => ({
+          ...item,
+          id: Date.now() + index,
+        }))
+      );
+      setYieldCount(match.yieldCount);
+      setManualCost("");
+      setRecipeSearch(match.name);
+      setNotice(`Подставлен пример рецепта «${match.name}». Проверьте цены и количества.`);
+    }
   }
 
   function saveProduct() {
@@ -249,7 +351,7 @@ export default function Home() {
       setNotice("Укажите название изделия.");
       return;
     }
-    if (sellingPrice.trim() === "" || Number(sellingPrice) < 0) {
+    if (sellingPrice.trim() === "" || !Number.isFinite(Number(sellingPrice)) || Number(sellingPrice) < 0) {
       setNotice("Укажите корректную цену продажи.");
       return;
     }
@@ -271,15 +373,13 @@ export default function Home() {
   }
 
   function addSale() {
-    const product = products.find(
-      (item) => item.id === Number(saleProductId)
-    );
+    const product = products.find((item) => item.id === Number(saleProductId));
 
     if (!product) {
       setNotice("Сначала добавьте изделие в калькуляторе.");
       return;
     }
-    if (!saleDate || Number(saleQuantity) <= 0 || Number(salePrice) < 0) {
+    if (!saleDate || Number(saleQuantity) <= 0 || !salePrice.trim() || Number(salePrice) < 0) {
       setNotice("Проверьте дату, количество и цену продажи.");
       return;
     }
@@ -335,19 +435,18 @@ export default function Home() {
         : `С ${fromDate} по ${toDate}`;
 
   return (
-    <main className="min-h-screen bg-[#fbf7f1] text-[#392820]">
+    <main className="min-h-screen bg-[#f5eef1] text-[#35252c]">
       <div className="no-print mx-auto max-w-6xl px-4 pb-12 pt-5 sm:px-6 sm:pt-8 lg:px-8">
-        <header className="mb-7 overflow-hidden rounded-3xl bg-[#54202b] text-white shadow-lg shadow-[#54202b]/10">
+        <header className="mb-7 overflow-hidden rounded-3xl bg-[#58152b] text-white shadow-lg shadow-[#58152b]/10">
           <div className="relative p-5 sm:p-8">
             <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full border border-white/10" />
             <div className="absolute -right-3 -top-6 h-32 w-32 rounded-full border border-white/10" />
-
             <div className="relative flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#d8b47a] text-[#54202b]">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#d4a9b8] text-[#58152b]">
                 <Wheat size={25} />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.23em] text-[#e8cda3]">
+                <p className="text-[10px] font-bold uppercase tracking-[0.23em] text-[#f0d5df]">
                   Учёт кондитерской
                 </p>
                 <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -355,7 +454,6 @@ export default function Home() {
                 </h1>
               </div>
             </div>
-
             <p className="relative mt-5 max-w-lg text-sm leading-6 text-white/75 sm:text-base">
               Себестоимость, продажи и прибыль — в одном удобном месте.
             </p>
@@ -364,75 +462,44 @@ export default function Home() {
 
         <nav className="mb-7 grid grid-cols-2 gap-3">
           <button
-            onClick={() => {
-              setTab("cost");
-              setNotice("");
-            }}
+            onClick={() => { setTab("cost"); setNotice(""); }}
             className={`flex min-h-[76px] items-center gap-3 rounded-2xl border p-4 text-left transition ${
               tab === "cost"
-                ? "border-[#6e2635] bg-white shadow-md shadow-[#54202b]/5"
-                : "border-[#ece2d6] bg-[#f5eee5] hover:bg-white"
+                ? "border-[#781f3b] bg-white shadow-md"
+                : "border-[#e8dce1] bg-[#f1e5ea] hover:bg-white"
             }`}
           >
-            <span
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                tab === "cost"
-                  ? "bg-[#6e2635] text-white"
-                  : "bg-white text-[#6e2635]"
-              }`}
-            >
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tab === "cost" ? "bg-[#781f3b] text-white" : "bg-white text-[#781f3b]"}`}>
               <Calculator size={21} />
             </span>
             <span className="min-w-0">
               <span className="block text-sm font-bold">Себестоимость</span>
-              <span className="mt-1 block text-xs text-[#8b796d]">
-                Расчёт изделий
-              </span>
+              <span className="mt-1 block text-xs text-[#81717a]">Расчёт изделий</span>
             </span>
           </button>
 
           <button
-            onClick={() => {
-              setTab("finance");
-              setNotice("");
-            }}
+            onClick={() => { setTab("finance"); setNotice(""); }}
             className={`flex min-h-[76px] items-center gap-3 rounded-2xl border p-4 text-left transition ${
               tab === "finance"
-                ? "border-[#6e2635] bg-white shadow-md shadow-[#54202b]/5"
-                : "border-[#ece2d6] bg-[#f5eee5] hover:bg-white"
+                ? "border-[#781f3b] bg-white shadow-md"
+                : "border-[#e8dce1] bg-[#f1e5ea] hover:bg-white"
             }`}
           >
-            <span
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                tab === "finance"
-                  ? "bg-[#6e2635] text-white"
-                  : "bg-white text-[#6e2635]"
-              }`}
-            >
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tab === "finance" ? "bg-[#781f3b] text-white" : "bg-white text-[#781f3b]"}`}>
               <ChartNoAxesCombined size={21} />
             </span>
             <span className="min-w-0">
               <span className="block text-sm font-bold">Продажи и прибыль</span>
-              <span className="mt-1 block text-xs text-[#8b796d]">
-                Финансовый учёт
-              </span>
+              <span className="mt-1 block text-xs text-[#81717a]">Финансовый учёт</span>
             </span>
           </button>
         </nav>
 
         {notice && (
-          <div
-            role="status"
-            className="mb-5 flex items-start justify-between gap-3 rounded-xl border border-[#e7d4b9] bg-[#fff6e6] px-4 py-3 text-sm text-[#73512d]"
-          >
+          <div role="status" className="mb-5 flex items-start justify-between gap-3 rounded-xl border border-[#e8cbd5] bg-[#fff7fa] px-4 py-3 text-sm text-[#781f3b]">
             <span>{notice}</span>
-            <button
-              onClick={() => setNotice("")}
-              className="shrink-0 font-bold"
-              aria-label="Закрыть уведомление"
-            >
-              ×
-            </button>
+            <button onClick={() => setNotice("")} className="shrink-0 font-bold" aria-label="Закрыть уведомление">×</button>
           </div>
         )}
 
@@ -441,83 +508,110 @@ export default function Home() {
             <SectionTitle
               eyebrow="Раздел 01"
               title="Калькулятор себестоимости"
-              description="Добавьте ингредиенты, укажите количество и стоимость закупки. Для каждого ингредиента выберите подходящую единицу измерения."
+              description="Выберите пример рецепта или внесите ингредиенты самостоятельно. Все количества и цены можно редактировать."
             />
 
-            <section className="mb-5 rounded-2xl border border-[#eee4d8] bg-white p-4 shadow-sm sm:p-6">
+            <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f1e5ea] text-[#781f3b]">
+                  <Search size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold">Быстрый выбор рецепта</h3>
+                  <p className="mt-1 text-xs text-[#81717a]">Примеры для начала расчёта</p>
+                </div>
+              </div>
+
+              <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                Найти рецепт
+                <input
+                  className={`${field} mt-1.5`}
+                  placeholder="Например, Наполеон"
+                  value={recipeSearch}
+                  onChange={(e) => {
+                    setRecipeSearch(e.target.value);
+                    const match = recipes.find((recipe) =>
+                      recipe.name.toLocaleLowerCase("ru") === e.target.value.trim().toLocaleLowerCase("ru")
+                    );
+                    if (match) applyRecipe(match);
+                  }}
+                />
+              </label>
+
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {recipes.map((recipe) => (
+                  <button
+                    key={recipe.name}
+                    onClick={() => applyRecipe(recipe)}
+                    className="min-h-11 rounded-xl border border-[#e8dce1] bg-[#fffafb] px-3 py-2 text-sm font-semibold text-[#781f3b] transition hover:bg-[#f5e8ed]"
+                  >
+                    {recipe.name}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 text-xs leading-5 text-[#81717a]">
+                Рецепты ориентировочные. Проверяйте состав, выход и стоимость продуктов перед расчётом.
+              </p>
+            </section>
+
+            <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f7eee2] text-[#6e2635]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f1e5ea] text-[#781f3b]">
                   <Package size={20} />
                 </div>
                 <div>
                   <h3 className="font-bold">Состав рецепта</h3>
-                  <p className="mt-1 text-xs text-[#8b796d]">
-                    Цена указывается за килограмм или за штуку
-                  </p>
+                  <p className="mt-1 text-xs text-[#81717a]">Цена указывается за килограмм или штуку</p>
                 </div>
               </div>
 
               <div className="space-y-4">
                 {ingredients.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl border border-[#eee5da] bg-[#fdfbf8] p-3 sm:p-4"
-                  >
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#9a8373]">
+                  <div key={item.id} className="min-w-0 rounded-2xl border border-[#eee5ea] bg-[#fffafb] p-3 sm:p-4">
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#986b7b]">
                         Ингредиент {index + 1}
                       </span>
                       <button
-                        onClick={() =>
-                          setIngredients((current) =>
-                            current.filter((entry) => entry.id !== item.id)
-                          )
-                        }
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-[#a56b6b] transition hover:bg-[#f8e9e7]"
+                        onClick={() => setIngredients((current) => current.filter((entry) => entry.id !== item.id))}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-[#a56b7a] hover:bg-[#f8e9ee]"
                         aria-label="Удалить ингредиент"
                       >
                         <Trash2 size={17} />
                       </button>
                     </div>
 
-                    <label className="mb-3 block text-xs font-semibold text-[#6f5b4e]">
+                    <label className="mb-3 block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                       Название
                       <input
                         className={`${field} mt-1.5`}
                         placeholder="Например, мука"
                         value={item.name}
-                        onChange={(e) =>
-                          updateIngredient(item.id, "name", e.target.value)
-                        }
+                        onChange={(e) => updateIngredient(item.id, "name", e.target.value)}
                       />
                     </label>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <label className="min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                    <div className="grid min-w-0 grid-cols-2 gap-3">
+                      <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                         Количество
                         <input
-                          className={`${field} mt-1.5 block box-border w-full min-w-0 max-w-full overflow-hidden`}
+                          className={`${field} mt-1.5`}
                           type="number"
                           min="0"
                           step="any"
                           inputMode="decimal"
                           placeholder="0"
                           value={item.amount}
-                          onChange={(e) =>
-                            updateIngredient(item.id, "amount", e.target.value)
-                          }
+                          onChange={(e) => updateIngredient(item.id, "amount", e.target.value)}
                         />
                       </label>
 
-                      <label className="min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                      <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                         Единица
                         <select
                           className={`${field} mt-1.5`}
                           value={item.unit}
-                          onChange={(e) => {
-                            const nextUnit = e.target.value as Unit;
-                            updateIngredient(item.id, "unit", nextUnit);
-                          }}
+                          onChange={(e) => updateIngredient(item.id, "unit", e.target.value as Unit)}
                         >
                           <option value="g">Граммы (г)</option>
                           <option value="kg">Килограммы (кг)</option>
@@ -526,10 +620,8 @@ export default function Home() {
                       </label>
                     </div>
 
-                    <label className="mt-3 block text-xs font-semibold text-[#6f5b4e]">
-                      {item.unit === "pcs"
-                        ? "Цена за 1 штуку (сум)"
-                        : "Цена за 1 кг (сум)"}
+                    <label className="mt-3 block min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                      {item.unit === "pcs" ? "Цена за 1 штуку (сум)" : "Цена за 1 кг (сум)"}
                       <input
                         className={`${field} mt-1.5`}
                         type="number"
@@ -538,38 +630,27 @@ export default function Home() {
                         inputMode="decimal"
                         placeholder="0"
                         value={item.price}
-                        onChange={(e) =>
-                          updateIngredient(item.id, "price", e.target.value)
-                        }
+                        onChange={(e) => updateIngredient(item.id, "price", e.target.value)}
                       />
                     </label>
 
-                    <div className="mt-3 flex items-center justify-between rounded-xl bg-[#f4ece2] px-3 py-2.5">
-                      <span className="text-xs text-[#7d695a]">
-                        Стоимость ингредиента
-                      </span>
-                      <span className="text-sm font-bold text-[#54202b]">
-                        {money(
-                          (Number(item.amount) || 0) *
-                            (Number(item.price) || 0) *
-                            (item.unit === "g" ? 0.001 : 1)
-                        )}
+                    <div className="mt-3 flex items-center justify-between gap-2 rounded-xl bg-[#f1e5ea] px-3 py-2.5">
+                      <span className="text-xs text-[#765666]">Стоимость ингредиента</span>
+                      <span className="text-sm font-bold text-[#58152b]">
+                        {money((Number(item.amount) || 0) * (Number(item.price) || 0) * (item.unit === "g" ? 0.001 : 1))}
                       </span>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <button
-                className={`${buttonSecondary} mt-4 w-full`}
-                onClick={addIngredient}
-              >
+              <button className={`${buttonSecondary} mt-4 w-full`} onClick={addIngredient}>
                 <Plus size={17} />
                 Добавить ингредиент
               </button>
 
-              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <label className="min-w-0 text-xs font-semibold text-[#6f5b4e]">
+              <div className="mt-5 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+                <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                   Сколько изделий получится из рецепта?
                   <input
                     className={`${field} mt-1.5`}
@@ -582,31 +663,58 @@ export default function Home() {
                   />
                 </label>
 
-                <div className="rounded-xl bg-[#f7eee2] p-4">
-                  <span className="text-xs font-medium text-[#806757]">
-                    Общая стоимость ингредиентов
-                  </span>
-                  <p className="mt-2 text-xl font-bold text-[#54202b]">
-                    {money(ingredientTotal)}
-                  </p>
+                <div className="rounded-xl bg-[#f1e5ea] p-4">
+                  <span className="text-xs font-medium text-[#765666]">Общая стоимость ингредиентов</span>
+                  <p className="mt-2 text-xl font-bold text-[#58152b]">{money(ingredientTotal)}</p>
                 </div>
               </div>
             </section>
 
-            <section className="mb-5 rounded-2xl border border-[#eee4d8] bg-white p-4 shadow-sm sm:p-6">
+            <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f7eee2] text-[#6e2635]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f1e5ea] text-[#781f3b]">
+                  <Flame size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold">Электричество и газ</h3>
+                  <p className="mt-1 text-xs text-[#81717a]">Затраты на весь рецепт</p>
+                </div>
+              </div>
+
+              <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                Электричество и газ на одну партию (сум)
+                <input
+                  className={`${field} mt-1.5`}
+                  type="number"
+                  min="0"
+                  step="any"
+                  inputMode="decimal"
+                  placeholder="0"
+                  value={utilityCost}
+                  onChange={(e) => setUtilityCost(e.target.value)}
+                />
+              </label>
+              <p className="mt-2 text-xs leading-5 text-[#81717a]">
+                Введите рассчитанную стоимость энергии для одной партии. Тарифы не загружаются автоматически.
+              </p>
+              <div className="mt-4 rounded-xl bg-[#f1e5ea] p-4">
+                <span className="text-xs text-[#765666]">Ингредиенты плюс коммунальные затраты</span>
+                <p className="mt-2 text-xl font-bold text-[#58152b]">{money(totalBatchCost)}</p>
+              </div>
+            </section>
+
+            <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f1e5ea] text-[#781f3b]">
                   <CircleDollarSign size={20} />
                 </div>
                 <div>
                   <h3 className="font-bold">Стоимость одного изделия</h3>
-                  <p className="mt-1 text-xs text-[#8b796d]">
-                    Можно указать себестоимость вручную
-                  </p>
+                  <p className="mt-1 text-xs text-[#81717a]">Можно указать себестоимость вручную</p>
                 </div>
               </div>
 
-              <label className="mb-4 block text-xs font-semibold text-[#6f5b4e]">
+              <label className="mb-4 block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                 Себестоимость одного изделия вручную (сум)
                 <input
                   className={`${field} mt-1.5`}
@@ -620,31 +728,27 @@ export default function Home() {
                 />
               </label>
 
-              <div className="rounded-2xl bg-[#54202b] p-5 text-white">
-                <p className="text-sm text-white/70">
-                  Себестоимость одного изделия
-                </p>
-                <p className="mt-2 break-words text-3xl font-bold tracking-tight sm:text-4xl">
-                  {money(calculatedCost)}
-                </p>
-                <p className="mt-2 text-xs leading-5 text-white/60">
+              <div className="rounded-2xl bg-[#58152b] p-5 text-white">
+                <p className="text-sm text-white/70">Себестоимость одного изделия</p>
+                <p className="mt-2 break-words text-3xl font-bold tracking-tight sm:text-4xl">{money(calculatedCost)}</p>
+                <p className="mt-2 text-xs leading-5 text-white/70">
                   {manualCost.trim() !== ""
                     ? "Используется указанная вами себестоимость."
-                    : "Стоимость ингредиентов разделена на количество изделий."}
+                    : "Ингредиенты и коммунальные затраты разделены на количество изделий."}
                 </p>
               </div>
 
-              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <label className="min-w-0 text-xs font-semibold text-[#6f5b4e]">
+              <div className="mt-5 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+                <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                   Название изделия
                   <input
                     className={`${field} mt-1.5`}
-                    placeholder="Например, чизкейк"
+                    placeholder="Например, Наполеон"
                     value={productName}
-                    onChange={(e) => setProductName(e.target.value)}
+                    onChange={(e) => handleProductNameChange(e.target.value)}
                   />
                 </label>
-                <label className="min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                   Цена продажи (сум)
                   <input
                     className={`${field} mt-1.5`}
@@ -665,46 +769,33 @@ export default function Home() {
               </button>
             </section>
 
-            <section className="rounded-2xl border border-[#eee4d8] bg-white p-4 shadow-sm sm:p-6">
+            <section className="rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
               <h3 className="mb-4 flex items-center gap-2 font-bold">
-                <ShoppingBag size={19} className="text-[#6e2635]" />
+                <ShoppingBag size={19} className="text-[#781f3b]" />
                 Список изделий
               </h3>
 
               {products.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-[#dfd2c3] px-4 py-8 text-center">
-                  <Package size={27} className="mx-auto text-[#b8a596]" />
-                  <p className="mt-3 text-sm font-semibold text-[#6f5b4e]">
-                    Пока нет добавленных изделий
-                  </p>
-                  <p className="mt-1 text-xs text-[#9b897a]">
-                    Заполните название и цену выше
-                  </p>
+                <div className="rounded-xl border border-dashed border-[#dfcbd3] px-4 py-8 text-center">
+                  <Package size={27} className="mx-auto text-[#b8a1ab]" />
+                  <p className="mt-3 text-sm font-semibold text-[#6f5b6a]">Пока нет добавленных изделий</p>
+                  <p className="mt-1 text-xs text-[#9b8490]">Заполните название и цену выше</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {products.map((product) => (
-                    <div
-                      key={product.id}
-                      className="flex min-w-0 items-center justify-between gap-3 rounded-xl bg-[#fdf9f4] p-3 sm:p-4"
-                    >
+                    <div key={product.id} className="flex min-w-0 items-center justify-between gap-3 rounded-xl bg-[#fffafb] p-3 sm:p-4">
                       <div className="min-w-0">
                         <p className="break-words font-bold">{product.name}</p>
-                        <p className="mt-1 text-xs text-[#8b796d]">
-                          Себестоимость: {money(product.cost)}
-                        </p>
-                        <p className="mt-1 text-xs text-[#8b796d]">
-                          Цена продажи: {money(product.price)}
-                        </p>
+                        <p className="mt-1 text-xs text-[#81717a]">Себестоимость: {money(product.cost)}</p>
+                        <p className="mt-1 text-xs text-[#81717a]">Цена продажи: {money(product.price)}</p>
                       </div>
                       <button
                         onClick={() => {
-                          setProducts((current) =>
-                            current.filter((p) => p.id !== product.id)
-                          );
+                          setProducts((current) => current.filter((p) => p.id !== product.id));
                           setNotice("Изделие удалено из списка.");
                         }}
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#a56b6b] hover:bg-[#f8e9e7]"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#a56b7a] hover:bg-[#f8e9ee]"
                         aria-label="Удалить изделие"
                       >
                         <Trash2 size={17} />
@@ -725,46 +816,42 @@ export default function Home() {
               description="Добавляйте продажи и расходы, выбирайте период и смотрите финансовый результат."
             />
 
-            <section className="mb-5 rounded-2xl border border-[#eee4d8] bg-white p-4 shadow-sm sm:p-6">
+            <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
               <h3 className="mb-4 flex items-center gap-2 font-bold">
-                <ShoppingBag size={19} className="text-[#6e2635]" />
+                <ShoppingBag size={19} className="text-[#781f3b]" />
                 Новая продажа
               </h3>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <label className="min-w-0 text-xs font-semibold text-[#6f5b4e]">
+              <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+                <label className="block min-w-0 w-full text-xs font-semibold text-[#6f5b4e]">
                   Дата продажи
                   <input
-                    className={`${field} mt-1.5`}
+                    className={`${field} mt-1.5 block box-border w-full min-w-0 max-w-full overflow-hidden`}
                     type="date"
                     value={saleDate}
                     onChange={(e) => setSaleDate(e.target.value)}
                   />
                 </label>
 
-                <label className="min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                   Изделие
                   <select
                     className={`${field} mt-1.5`}
                     value={saleProductId}
                     onChange={(e) => {
                       setSaleProductId(e.target.value);
-                      const selected = products.find(
-                        (p) => p.id === Number(e.target.value)
-                      );
+                      const selected = products.find((p) => p.id === Number(e.target.value));
                       if (selected) setSalePrice(String(selected.price));
                     }}
                   >
                     <option value="">Выберите изделие</option>
                     {products.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.name}
-                      </option>
+                      <option key={product.id} value={product.id}>{product.name}</option>
                     ))}
                   </select>
                 </label>
 
-                <label className="min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                   Количество
                   <input
                     className={`${field} mt-1.5`}
@@ -777,7 +864,7 @@ export default function Home() {
                   />
                 </label>
 
-                <label className="min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                   Цена за единицу (сум)
                   <input
                     className={`${field} mt-1.5`}
@@ -791,30 +878,24 @@ export default function Home() {
                 </label>
               </div>
 
-              <button
-                className={`${buttonPrimary} mt-4 w-full`}
-                onClick={addSale}
-                disabled={products.length === 0}
-              >
+              <button className={`${buttonPrimary} mt-4 w-full`} onClick={addSale} disabled={products.length === 0}>
                 <Plus size={17} />
                 Добавить продажу
               </button>
 
               {products.length === 0 && (
-                <p className="mt-3 text-xs leading-5 text-[#9b7968]">
-                  Сначала добавьте изделия в разделе «Себестоимость».
-                </p>
+                <p className="mt-3 text-xs leading-5 text-[#9b7988]">Сначала добавьте изделия в разделе «Себестоимость».</p>
               )}
             </section>
 
-            <section className="mb-5 rounded-2xl border border-[#eee4d8] bg-white p-4 shadow-sm sm:p-6">
+            <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
               <h3 className="mb-4 flex items-center gap-2 font-bold">
-                <ReceiptText size={19} className="text-[#6e2635]" />
+                <ReceiptText size={19} className="text-[#781f3b]" />
                 Дополнительный расход
               </h3>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <label className="min-w-0 text-xs font-semibold text-[#6f5b4e]">
+              <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+                <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                   Дата расхода
                   <input
                     className={`${field} mt-1.5`}
@@ -824,7 +905,7 @@ export default function Home() {
                   />
                 </label>
 
-                <label className="min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                   Название расхода
                   <input
                     className={`${field} mt-1.5`}
@@ -834,7 +915,7 @@ export default function Home() {
                   />
                 </label>
 
-                <label className="min-w-0 text-xs font-semibold text-[#6f5b4e] sm:col-span-2">
+                <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e] sm:col-span-2">
                   Сумма расхода (сум)
                   <input
                     className={`${field} mt-1.5`}
@@ -855,24 +936,21 @@ export default function Home() {
               </button>
             </section>
 
-            <section className="mb-5 rounded-2xl border border-[#eee4d8] bg-white p-4 shadow-sm sm:p-6">
+            <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
               <h3 className="mb-4 font-bold">Период отчёта</h3>
-
               <div className="grid grid-cols-3 gap-2">
-                {(
-                  [
-                    ["today", "Сегодня"],
-                    ["month", "Месяц"],
-                    ["custom", "Период"],
-                  ] as const
-                ).map(([value, label]) => (
+                {([
+                  ["today", "Сегодня"],
+                  ["month", "Месяц"],
+                  ["custom", "Период"],
+                ] as const).map(([value, label]) => (
                   <button
                     key={value}
                     onClick={() => setPeriod(value)}
                     className={`min-h-11 rounded-xl border px-2 py-2 text-xs font-semibold transition sm:text-sm ${
                       period === value
-                        ? "border-[#6e2635] bg-[#6e2635] text-white"
-                        : "border-[#e8dfd3] bg-white text-[#6f5b4e] hover:bg-[#faf5ee]"
+                        ? "border-[#781f3b] bg-[#781f3b] text-white"
+                        : "border-[#e8dce1] bg-white text-[#6f5b6a] hover:bg-[#faf3f6]"
                     }`}
                   >
                     {label}
@@ -881,24 +959,14 @@ export default function Home() {
               </div>
 
               {period === "custom" && (
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <label className="min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                     Начало периода
-                    <input
-                      className={`${field} mt-1.5`}
-                      type="date"
-                      value={fromDate}
-                      onChange={(e) => setFromDate(e.target.value)}
-                    />
+                    <input className={`${field} mt-1.5`} type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
                   </label>
-                  <label className="min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                  <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                     Конец периода
-                    <input
-                      className={`${field} mt-1.5`}
-                      type="date"
-                      value={toDate}
-                      onChange={(e) => setToDate(e.target.value)}
-                    />
+                    <input className={`${field} mt-1.5`} type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
                   </label>
                 </div>
               )}
@@ -906,79 +974,41 @@ export default function Home() {
 
             <section className="mb-5">
               <div className="mb-4">
-                <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#986b57]">
-                  Финансовый результат
-                </p>
+                <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#986b7b]">Финансовый результат</p>
                 <h3 className="mt-1 text-lg font-bold">{reportPeriod}</h3>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <StatCard
-                  label="Выручка"
-                  value={money(revenue)}
-                  icon={Wallet}
-                />
-                <StatCard
-                  label="Себестоимость продаж"
-                  value={money(goodsCost)}
-                  icon={Package}
-                />
-                <StatCard
-                  label="Дополнительные расходы"
-                  value={money(expenseTotal)}
-                  icon={ReceiptText}
-                />
-                <StatCard
-                  label="Чистая прибыль"
-                  value={money(profit)}
-                  icon={TrendingUp}
-                  tone="green"
-                />
+                <StatCard label="Выручка" value={money(revenue)} icon={Wallet} />
+                <StatCard label="Себестоимость продаж" value={money(goodsCost)} icon={Package} />
+                <StatCard label="Дополнительные расходы" value={money(expenseTotal)} icon={ReceiptText} />
+                <StatCard label="Чистая прибыль" value={money(profit)} icon={TrendingUp} tone="green" />
               </div>
 
-              <div className="mt-3 rounded-2xl bg-[#54202b] p-5 text-white">
+              <div className="mt-3 rounded-2xl bg-[#58152b] p-5 text-white">
                 <p className="text-sm text-white/70">Итоговая прибыль за период</p>
-                <p className="mt-2 break-words text-3xl font-bold sm:text-4xl">
-                  {money(profit)}
-                </p>
-                <p className="mt-3 text-xs leading-5 text-white/65">
+                <p className="mt-2 break-words text-3xl font-bold sm:text-4xl">{money(profit)}</p>
+                <p className="mt-3 text-xs leading-5 text-white/70">
                   Выручка − себестоимость проданных изделий − дополнительные расходы.
                 </p>
               </div>
             </section>
 
-            <section className="mb-5 rounded-2xl border border-[#eee4d8] bg-white p-4 shadow-sm sm:p-6">
+            <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
               <h3 className="mb-4 font-bold">Продажи за выбранный период</h3>
-
               {filteredSales.length === 0 ? (
-                <p className="rounded-xl bg-[#fdf9f4] px-4 py-6 text-center text-sm text-[#8b796d]">
-                  За этот период продаж пока нет.
-                </p>
+                <p className="rounded-xl bg-[#fffafb] px-4 py-6 text-center text-sm text-[#81717a]">За этот период продаж пока нет.</p>
               ) : (
                 <div className="space-y-3">
                   {filteredSales.map((sale) => (
-                    <div
-                      key={sale.id}
-                      className="flex min-w-0 items-start justify-between gap-3 rounded-xl bg-[#fdf9f4] p-3"
-                    >
+                    <div key={sale.id} className="flex min-w-0 items-start justify-between gap-3 rounded-xl bg-[#fffafb] p-3">
                       <div className="min-w-0">
                         <p className="break-words text-sm font-bold">{sale.productName}</p>
-                        <p className="mt-1 text-xs text-[#8b796d]">
-                          {sale.date} · {sale.quantity} шт. × {money(sale.price)}
-                        </p>
+                        <p className="mt-1 text-xs text-[#81717a]">{sale.date} · {sale.quantity} шт. × {money(sale.price)}</p>
                       </div>
                       <div className="shrink-0 text-right">
                         <p className="text-sm font-bold">{money(sale.price * sale.quantity)}</p>
-                        <button
-                          className="mt-2 text-xs text-[#a56b6b] underline"
-                          onClick={() =>
-                            setSales((current) =>
-                              current.filter((item) => item.id !== sale.id)
-                            )
-                          }
-                        >
-                          Удалить
-                        </button>
+                        <button className="mt-2 text-xs text-[#a56b7a] underline" onClick={() => setSales((current) => current.filter((item) => item.id !== sale.id))}>Удалить</button>
                       </div>
                     </div>
                   ))}
@@ -986,36 +1016,21 @@ export default function Home() {
               )}
             </section>
 
-            <section className="mb-5 rounded-2xl border border-[#eee4d8] bg-white p-4 shadow-sm sm:p-6">
+            <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
               <h3 className="mb-4 font-bold">Расходы за выбранный период</h3>
-
               {filteredExpenses.length === 0 ? (
-                <p className="rounded-xl bg-[#fdf9f4] px-4 py-6 text-center text-sm text-[#8b796d]">
-                  За этот период дополнительных расходов пока нет.
-                </p>
+                <p className="rounded-xl bg-[#fffafb] px-4 py-6 text-center text-sm text-[#81717a]">За этот период дополнительных расходов пока нет.</p>
               ) : (
                 <div className="space-y-3">
                   {filteredExpenses.map((expense) => (
-                    <div
-                      key={expense.id}
-                      className="flex min-w-0 items-start justify-between gap-3 rounded-xl bg-[#fdf9f4] p-3"
-                    >
+                    <div key={expense.id} className="flex min-w-0 items-start justify-between gap-3 rounded-xl bg-[#fffafb] p-3">
                       <div className="min-w-0">
                         <p className="break-words text-sm font-bold">{expense.name}</p>
-                        <p className="mt-1 text-xs text-[#8b796d]">{expense.date}</p>
+                        <p className="mt-1 text-xs text-[#81717a]">{expense.date}</p>
                       </div>
                       <div className="shrink-0 text-right">
                         <p className="text-sm font-bold">{money(expense.amount)}</p>
-                        <button
-                          className="mt-2 text-xs text-[#a56b6b] underline"
-                          onClick={() =>
-                            setExpenses((current) =>
-                              current.filter((item) => item.id !== expense.id)
-                            )
-                          }
-                        >
-                          Удалить
-                        </button>
+                        <button className="mt-2 text-xs text-[#a56b7a] underline" onClick={() => setExpenses((current) => current.filter((item) => item.id !== expense.id))}>Удалить</button>
                       </div>
                     </div>
                   ))}
@@ -1023,24 +1038,12 @@ export default function Home() {
               )}
             </section>
 
-            <button
-              className={`${buttonPrimary} w-full`}
-              onClick={exportPdf}
-            >
+            <button className={`${buttonPrimary} w-full`} onClick={exportPdf}>
               <FileDown size={18} />
               Сохранить отчёт в PDF
             </button>
           </>
         )}
-
-        <footer className="mt-10 border-t border-[#e8dfd3] pt-5 text-center">
-          <p className="text-xs font-semibold tracking-wide text-[#806757]">
-            Bakery Accounting
-          </p>
-          <p className="mt-1 text-xs text-[#a18d7d]">
-            Простой учёт. Понятные расчёты.
-          </p>
-        </footer>
       </div>
 
       <div className="print-only">
@@ -1063,12 +1066,7 @@ export default function Home() {
         <table>
           <thead>
             <tr>
-              <th>Дата</th>
-              <th>Изделие</th>
-              <th>Кол-во</th>
-              <th>Цена</th>
-              <th>Выручка</th>
-              <th>Себестоимость</th>
+              <th>Дата</th><th>Изделие</th><th>Кол-во</th><th>Цена</th><th>Выручка</th><th>Себестоимость</th>
             </tr>
           </thead>
           <tbody>
@@ -1082,34 +1080,24 @@ export default function Home() {
                 <td>{money(sale.cost * sale.quantity)}</td>
               </tr>
             ))}
-            {filteredSales.length === 0 && (
-              <tr><td colSpan={6}>За выбранный период продаж нет.</td></tr>
-            )}
+            {filteredSales.length === 0 && <tr><td colSpan={6}>За выбранный период продаж нет.</td></tr>}
           </tbody>
         </table>
 
         <h3>Дополнительные расходы</h3>
         <table>
-          <thead>
-            <tr><th>Дата</th><th>Расход</th><th>Сумма</th></tr>
-          </thead>
+          <thead><tr><th>Дата</th><th>Расход</th><th>Сумма</th></tr></thead>
           <tbody>
             {filteredExpenses.map((expense) => (
               <tr key={expense.id}>
-                <td>{expense.date}</td>
-                <td>{expense.name}</td>
-                <td>{money(expense.amount)}</td>
+                <td>{expense.date}</td><td>{expense.name}</td><td>{money(expense.amount)}</td>
               </tr>
             ))}
-            {filteredExpenses.length === 0 && (
-              <tr><td colSpan={3}>За выбранный период расходов нет.</td></tr>
-            )}
+            {filteredExpenses.length === 0 && <tr><td colSpan={3}>За выбранный период расходов нет.</td></tr>}
           </tbody>
         </table>
 
-        <p className="print-footer">
-          Отчёт сформирован в Bakery Accounting. Все суммы указаны в сумах.
-        </p>
+        <p className="print-footer">Отчёт сформирован в Bakery Accounting. Все суммы указаны в сумах.</p>
       </div>
     </main>
   );
