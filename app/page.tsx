@@ -496,7 +496,7 @@ export default function Home() {
                       <label className="min-w-0 text-xs font-semibold text-[#6f5b4e]">
                         Количество
                         <input
-                          className={`${field} mt-1.5`}
+                          className={`${field} mt-1.5 block box-border w-full min-w-0 max-w-full overflow-hidden`}
                           type="number"
                           min="0"
                           step="any"
