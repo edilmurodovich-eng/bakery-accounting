@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Calculator,
   ChartNoAxesCombined,
@@ -59,7 +59,27 @@ type Recipe = {
   yieldCount: string;
   ingredients: Omit<Ingredient, "id">[];
 };
+type ApiRecipeIngredient = {
+  display?: string;
+  name?: string;
+  original?: string;
+  quantity?: {
+    value?: number | string;
+    unit?: string;
+  };
+};
 
+type ApiRecipe = {
+  title?: string;
+  url?: string;
+  language?: string;
+  ingredients?: ApiRecipeIngredient[];
+};
+
+type ApiRecipeResponse = {
+  results?: ApiRecipe[];
+  error?: string;
+};
 const money = (value: number) =>
   new Intl.NumberFormat("ru-RU", {
     maximumFractionDigits: 0,
@@ -227,7 +247,10 @@ export default function Home() {
   const [sellingPrice, setSellingPrice] = useState("");
   const [utilityCost, setUtilityCost] = useState("0");
   const [recipeSearch, setRecipeSearch] = useState("");
-
+const [apiRecipes, setApiRecipes] = useState<ApiRecipe[]>([]);
+const [isSearchingRecipes, setIsSearchingRecipes] = useState(false);
+const [selectedApiRecipe, setSelectedApiRecipe] = useState<ApiRecipe | null>(null);
+const [recipeSearchError, setRecipeSearchError] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -323,6 +346,115 @@ export default function Home() {
     setRecipeSearch(recipe.name);
     setNotice(`Загружен пример рецепта «${recipe.name}». Проверьте количества и цены.`);
   }
+
+async function searchOnlineRecipes(query: string) {
+  const search = query.trim();
+
+  if (search.length < 2) {
+    setApiRecipes([]);
+    setRecipeSearchError("");
+    return;
+  }
+
+function applyOnlineRecipe(recipe: ApiRecipe) {
+  const sourceIngredients = recipe.ingredients ?? [];
+
+  const parsedIngredients: Ingredient[] = sourceIngredients.map(
+    (item, index) => {
+      const quantity = item.quantity;
+      const rawUnit = String(quantity?.unit ?? "").toLowerCase();
+      const rawAmount = quantity?.value;
+      const display = item.display ?? item.original ?? "";
+      const name = item.name?.trim() || display.trim() || `Ингредиент ${index + 1}`;
+
+      let unit: Unit = "g";
+      let amount = Number(rawAmount);
+
+      if (rawUnit.includes("kg") || rawUnit.includes("kilogram")) {
+        unit = "kg";
+      } else if (
+        rawUnit.includes("piece") ||
+        rawUnit.includes("pcs") ||
+        rawUnit === "each" ||
+        rawUnit === "egg"
+      ) {
+        unit = "pcs";
+      } else if (
+        rawUnit.includes("cup") ||
+        rawUnit.includes("tbsp") ||
+        rawUnit.includes("tsp") ||
+        rawUnit.includes("oz") ||
+        rawUnit.includes("lb")
+      ) {
+        unit = "g";
+        amount = Number.NaN;
+      } else if (
+        rawUnit.includes("g") ||
+        rawUnit.includes("gram")
+      ) {
+        unit = "g";
+      } else {
+        amount = Number.NaN;
+      }
+
+      return {
+        id: Date.now() + index,
+        name,
+        amount: Number.isFinite(amount) && amount >= 0 ? String(amount) : "",
+        unit,
+        price: "",
+      };
+    }
+  );
+
+  setIngredients(parsedIngredients);
+  setProductName(recipe.title ?? "");
+  setRecipeSearch(recipe.title ?? "");
+  setSelectedApiRecipe(recipe);
+  setManualCost("");
+  setYieldCount("1");
+  setNotice(
+    "Рецепт загружен. Проверьте количества и единицы измерения, укажите цены в сумах."
+  );
+}
+
+  setIsSearchingRecipes(true);
+  setRecipeSearchError("");
+  setSelectedApiRecipe(null);
+
+  try {
+    const response = await fetch(
+      `/api/recipes?query=${encodeURIComponent(search)}`,
+      { cache: "no-store" }
+    );
+
+    const data: ApiRecipeResponse = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Не удалось найти рецепты.");
+    }
+
+    const results = Array.isArray(data.results) ? data.results : [];
+    setApiRecipes(results.filter((recipe) =>
+      Boolean(recipe.title) &&
+      Array.isArray(recipe.ingredients) &&
+      recipe.ingredients.length > 0
+    ));
+
+    if (results.length === 0) {
+      setRecipeSearchError("Рецепты не найдены. Попробуйте другое название.");
+    }
+  } catch (error) {
+    setApiRecipes([]);
+    setRecipeSearchError(
+      error instanceof Error
+        ? error.message
+        : "Ошибка поиска рецептов."
+    );
+  } finally {
+    setIsSearchingRecipes(false);
+  }
+}
 
   function handleProductNameChange(value: string) {
     setProductName(value);
