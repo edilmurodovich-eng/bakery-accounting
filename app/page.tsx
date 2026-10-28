@@ -359,11 +359,6 @@ export default function Home() {
             <p className="relative mt-5 max-w-lg text-sm leading-6 text-white/75 sm:text-base">
               Себестоимость, продажи и прибыль — в одном удобном месте.
             </p>
-
-            <div className="relative mt-5 flex items-center gap-2 text-xs text-[#f1d8b3]">
-              <span className="h-2 w-2 rounded-full bg-[#a8c79e]" />
-              Данные хранятся только в открытой сессии
-            </div>
           </div>
         </header>
 
