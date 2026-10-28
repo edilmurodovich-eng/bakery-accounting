@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Calculator,
   ChartNoAxesCombined,
@@ -249,7 +249,6 @@ export default function Home() {
   const [recipeSearch, setRecipeSearch] = useState("");
 const [apiRecipes, setApiRecipes] = useState<ApiRecipe[]>([]);
 const [isSearchingRecipes, setIsSearchingRecipes] = useState(false);
-const [selectedApiRecipe, setSelectedApiRecipe] = useState<ApiRecipe | null>(null);
 const [recipeSearchError, setRecipeSearchError] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -410,7 +409,6 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
   setIngredients(parsedIngredients);
   setProductName(recipe.title ?? "");
   setRecipeSearch(recipe.title ?? "");
-  setSelectedApiRecipe(recipe);
   setManualCost("");
   setYieldCount("1");
   setNotice(
@@ -420,7 +418,6 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
 
   setIsSearchingRecipes(true);
   setRecipeSearchError("");
-  setSelectedApiRecipe(null);
 
   try {
     const response = await fetch(
@@ -669,6 +666,59 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                   }}
                 />
               </label>
+
+<button
+  className={`${buttonPrimary} mt-3 w-full`}
+  onClick={() => searchOnlineRecipes(recipeSearch)}
+  disabled={isSearchingRecipes || recipeSearch.trim().length < 2}
+>
+  <Search size={17} />
+  {isSearchingRecipes ? "Ищем рецепты..." : "Найти рецепты в интернете"}
+</button>
+
+{recipeSearchError && (
+  <p role="status" className="mt-3 rounded-xl bg-[#fff7fa] p-3 text-sm text-[#781f3b]">
+    {recipeSearchError}
+  </p>
+)}
+
+{apiRecipes.length > 0 && (
+  <div className="mt-4 space-y-3">
+    <h4 className="text-sm font-bold text-[#50343f]">
+      Результаты поиска
+    </h4>
+
+    {apiRecipes.map((recipe, index) => (
+      <div
+        key={`${recipe.url ?? recipe.title}-${index}`}
+        className="rounded-xl border border-[#e8dce1] bg-[#fffafb] p-3"
+      >
+        <p className="font-bold text-[#58152b]">{recipe.title}</p>
+        <p className="mt-1 text-xs text-[#81717a]">
+          Ингредиентов: {recipe.ingredients?.length ?? 0}
+        </p>
+
+        <button
+          className={`${buttonSecondary} mt-3 w-full`}
+          onClick={() => applyOnlineRecipe(recipe)}
+        >
+          Выбрать этот рецепт
+        </button>
+
+        {recipe.url && (
+          <a
+            href={recipe.url}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 block break-all text-sm text-[#781f3b] underline"
+          >
+            Открыть оригинал рецепта
+          </a>
+        )}
+      </div>
+    ))}
+  </div>
+)}
 
               <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {recipes.map((recipe) => (
