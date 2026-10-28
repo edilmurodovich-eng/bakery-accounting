@@ -397,72 +397,232 @@ export default function Home() {
     }
   }
 
-  function applyOnlineRecipe(recipe: ApiRecipe) {
-    const sourceIngredients = recipe.ingredients ?? [];
+  
+function translateIngredientName(name: string): string {
+  const translations: Record<string, string> = {
+    flour: "Мука",
+    "all-purpose flour": "Пшеничная мука",
+    "plain flour": "Пшеничная мука",
+    sugar: "Сахар",
+    "granulated sugar": "Сахар",
+    "powdered sugar": "Сахарная пудра",
+    salt: "Соль",
+    eggs: "Яйца",
+    egg: "Яйцо",
+    butter: "Сливочное масло",
+    "unsalted butter": "Сливочное масло",
+    milk: "Молоко",
+    water: "Вода",
+    cream: "Сливки",
+    "heavy cream": "Жирные сливки",
+    "whipping cream": "Сливки для взбивания",
+    sour cream: "Сметана",
+    yeast: "Дрожжи",
+    "baking powder": "Разрыхлитель",
+    "baking soda": "Пищевая сода",
+    vanilla: "Ваниль",
+    "vanilla extract": "Ванильный экстракт",
+    honey: "Мёд",
+    cocoa: "Какао",
+    "cocoa powder": "Какао-порошок",
+    chocolate: "Шоколад",
+    "dark chocolate": "Тёмный шоколад",
+    "vegetable oil": "Растительное масло",
+    oil: "Масло",
+    water: "Вода",
+    starch: "Крахмал",
+    cornstarch: "Кукурузный крахмал",
+    "cream cheese": "Сливочный сыр",
+    cheese: "Сыр",
+    yogurt: "Йогурт",
+    yoghurt: "Йогурт",
+    cinnamon: "Корица",
+    lemon: "Лимон",
+    "lemon juice": "Лимонный сок",
+    apples: "Яблоки",
+    apple: "Яблоко",
+    strawberries: "Клубника",
+    strawberry: "Клубника",
+    raspberries: "Малина",
+    raspberry: "Малина",
+    almonds: "Миндаль",
+    almond: "Миндаль",
+    walnuts: "Грецкие орехи",
+    "walnuts": "Грецкие орехи",
+    raisins: "Изюм",
+    raisin: "Изюм",
+    condensed milk: "Сгущённое молоко",
+    "sweetened condensed milk": "Сгущённое молоко",
+    "puff pastry": "Слоёное тесто",
+    pastry: "Тесто",
+    dough: "Тесто",
+    "bread flour": "Хлебопекарная мука",
+    "almond flour": "Миндальная мука",
+    "brown sugar": "Коричневый сахар",
+    "icing sugar": "Сахарная пудра",
+    "maple syrup": "Кленовый сироп",
+    gelatin: "Желатин",
+    jam: "Варенье",
+    "tomato paste": "Томатная паста",
+  };
 
-    const parsedIngredients: Ingredient[] = sourceIngredients.map(
-      (item, index) => {
-        const rawUnit = String(item.quantity?.unit ?? "").toLowerCase();
-        const rawAmount = item.quantity?.value;
-        const display = item.display ?? item.original ?? "";
-        const name =
-          item.name?.trim() ||
-          display.trim() ||
-          `Ингредиент ${index + 1}`;
+  const cleaned = name
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, "")
+    .replace(/[,;]+$/g, "")
+    .trim();
 
-        let unit: Unit = "g";
-        let amount = Number(rawAmount);
+  if (translations[cleaned]) return translations[cleaned];
+
+  return name
+    .replace(/^\s*[-•]\s*/, "")
+    .trim();
+}
+
+function parseIngredientAmount(item: ApiRecipeIngredient): {
+  name: string;
+  amount: string;
+  unit: Unit;
+} {
+  const rawName = String(item.name ?? "").trim();
+  const rawDisplay = String(item.display ?? "").trim();
+  const rawOriginal = String(item.original ?? "").trim();
+
+  const rawUnit = String(item.quantity?.unit ?? "").toLowerCase();
+  const rawValue = item.quantity?.value;
+
+  let amount = "";
+  let unit: Unit = "g";
+
+  if (rawValue !== undefined && rawValue !== null && rawValue !== "") {
+    const numericValue = Number(rawValue);
+
+    if (Number.isFinite(numericValue) && numericValue >= 0) {
+      amount = String(numericValue);
+
+      if (
+        rawUnit === "kg" ||
+        rawUnit.includes("kilogram")
+      ) {
+        unit = "kg";
+      } else if (
+        rawUnit.includes("piece") ||
+        rawUnit.includes("pcs") ||
+        rawUnit === "each" ||
+        rawUnit === "egg"
+      ) {
+        unit = "pcs";
+      } else if (
+        rawUnit === "g" ||
+        rawUnit.includes("gram")
+      ) {
+        unit = "g";
+      } else if (
+        rawUnit === "ml" ||
+        rawUnit.includes("milliliter") ||
+        rawUnit.includes("millilitre")
+      ) {
+        // В текущем калькуляторе нет отдельной единицы «мл».
+        // Не выдаём миллилитры за граммы.
+        amount = "";
+      } else if (rawUnit) {
+        // Не подставляем неизвестную единицу как граммы.
+        amount = "";
+      }
+    }
+  }
+
+  const combined = rawOriginal || rawDisplay || rawName;
+
+  if (!amount && combined) {
+    const match = combined.match(
+      /^\s*(\d+(?:[.,]\d+)?|\d+\s+\d+\/\d+|\d+\/\d+)\s*(kg|kilograms?|g|grams?|gr|oz|ounces?|lb|pounds?|ml|milliliters?|millilitres?|l|liters?|litres?|cups?|c|tbsp|tablespoons?|tsp|teaspoons?|pcs?|pieces?|eggs?)?\b/i
+    );
+
+    if (match) {
+      const rawAmount = match[1].replace(",", ".");
+      const parsed = Number(rawAmount);
+
+      if (Number.isFinite(parsed) && parsed >= 0) {
+        const foundUnit = (match[2] ?? "").toLowerCase();
 
         if (
-          rawUnit.includes("kg") ||
-          rawUnit.includes("kilogram")
+          foundUnit === "kg" ||
+          foundUnit.startsWith("kilogram")
         ) {
+          amount = String(parsed);
           unit = "kg";
         } else if (
-          rawUnit.includes("piece") ||
-          rawUnit.includes("pcs") ||
-          rawUnit === "each" ||
-          rawUnit === "egg"
+          foundUnit === "g" ||
+          foundUnit === "gr" ||
+          foundUnit.startsWith("gram")
         ) {
+          amount = String(parsed);
+          unit = "g";
+        } else if (
+          foundUnit.startsWith("piece") ||
+          foundUnit === "pc" ||
+          foundUnit === "pcs" ||
+          foundUnit.startsWith("egg")
+        ) {
+          amount = String(parsed);
           unit = "pcs";
-        } else if (
-          rawUnit.includes("cup") ||
-          rawUnit.includes("tbsp") ||
-          rawUnit.includes("tsp") ||
-          rawUnit.includes("oz") ||
-          rawUnit.includes("lb")
-        ) {
-          unit = "g";
-          amount = Number.NaN;
-        } else if (
-          rawUnit.includes("g") ||
-          rawUnit.includes("gram")
-        ) {
-          unit = "g";
-        } else {
-          amount = Number.NaN;
         }
-
-        return {
-          id: Date.now() + index,
-          name,
-          amount:
-            Number.isFinite(amount) && amount >= 0 ? String(amount) : "",
-          unit,
-          price: "",
-        };
       }
+    }
+  }
+
+  let name = rawName || rawDisplay || rawOriginal || "Ингредиент";
+
+  if (rawName && rawOriginal) {
+    const prefix = rawOriginal.match(
+      /^\s*(?:\d+(?:[.,]\d+)?|\d+\s+\d+\/\d+|\d+\/\d+)\s*(?:kg|kilograms?|g|grams?|gr|oz|ounces?|lb|pounds?|ml|milliliters?|millilitres?|l|liters?|litres?|cups?|c|tbsp|tablespoons?|tsp|teaspoons?|pcs?|pieces?|eggs?)?\s*/i
     );
 
-    setIngredients(parsedIngredients);
-    setProductName(recipe.title ?? "");
-    setRecipeSearch(recipe.title ?? "");
-    setManualCost("");
-    setYieldCount("1");
-    setNotice(
-      "Рецепт загружен. Проверьте ингредиенты и количества, укажите цены в сумах и исправьте выход партии."
+    if (prefix) name = rawName;
+  } else {
+    name = name.replace(
+      /^\s*(?:\d+(?:[.,]\d+)?|\d+\s+\d+\/\d+|\d+\/\d+)\s*(?:kg|kilograms?|g|grams?|gr|oz|ounces?|lb|pounds?|ml|milliliters?|millilitres?|l|liters?|litres?|cups?|c|tbsp|tablespoons?|tsp|teaspoons?|pcs?|pieces?|eggs?)?\s*/i,
+      ""
     );
   }
+
+  name = name.replace(/^[\s,;:–—-]+|[\s,;:–—-]+$/g, "").trim();
+
+  return {
+    name: translateIngredientName(name || rawName || "Ингредиент"),
+    amount,
+    unit,
+  };
+}
+
+function applyOnlineRecipe(recipe: ApiRecipe) {
+  const sourceIngredients = recipe.ingredients ?? [];
+
+  const parsedIngredients: Ingredient[] = sourceIngredients.map(
+    (item, index) => {
+      const parsed = parseIngredientAmount(item);
+
+      return {
+        id: Date.now() + index,
+        name: parsed.name,
+        amount: parsed.amount,
+        unit: parsed.unit,
+        price: "",
+      };
+    }
+  );
+
+  setIngredients(parsedIngredients);
+  setProductName(recipe.title ?? "");
+  setRecipeSearch(recipe.title ?? "");
+  setManualCost("");
+  setYieldCount("1");
+  setNotice(
+    "Рецепт загружен. Проверьте перевод, количества и единицы измерения. Если количество не найдено, заполните его вручную."
+  );
+}
+
 
   function handleProductNameChange(value: string) {
     setProductName(value);
