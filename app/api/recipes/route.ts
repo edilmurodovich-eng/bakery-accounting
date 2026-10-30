@@ -61,11 +61,17 @@ export async function GET(request: Request) {
 
     const data = await response.json();
 console.log("TINYPLATES RESPONSE:", JSON.stringify(data, null, 2));
-    return NextResponse.json(data, {
-      headers: {
-        "Cache-Control": "no-store",
-      },
-    });
+    return NextResponse.json(
+  {
+    debug: true,
+    tinyPlatesResponse: data,
+  },
+  {
+    headers: {
+      "Cache-Control": "no-store",
+    },
+  }
+);
   } catch {
     return NextResponse.json(
       { error: "Ошибка соединения с сервисом рецептов." },
