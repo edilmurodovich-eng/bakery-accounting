@@ -486,7 +486,7 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
   amount: string;
   unit: Unit;
 } {
-  const rawName = String(item.name ?? "").trim();
+  const rawName = String(item.localName ?? item.name ?? "").trim();
   const rawDisplay = String(item.display ?? "").trim();
   const rawOriginal = String(item.original ?? "").trim();
 
@@ -501,10 +501,8 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
       const fraction = parts[1]?.split("/");
 
       if (fraction?.length === 2) {
-        return (
-          Number(parts[0]) +
-          Number(fraction[0]) / Number(fraction[1])
-        );
+        return Number(parts[0]) +
+          Number(fraction[0]) / Number(fraction[1]);
       }
     }
 
@@ -517,84 +515,106 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
   }
 
   function normalizeUnit(value: string): {
-    amount: number;
+    multiplier: number;
     unit: Unit;
   } | null {
     const u = value.toLowerCase().trim();
 
-    if (
-      u === "kg" ||
-      u.includes("kilogram")
-    ) {
-      return { amount: 1, unit: "kg" };
+    if (/^(kg|kgs|kilograms?)$/.test(u)) {
+      return { multiplier: 1, unit: "kg" };
+    }
+
+    if (/^(g|gr|grams?)$/.test(u)) {
+      return { multiplier: 1, unit: "g" };
+    }
+
+    if (/^(oz|ounces?)$/.test(u)) {
+      return { multiplier: 28.3495, unit: "g" };
+    }
+
+    if (/^(lb|lbs|pounds?)$/.test(u)) {
+      return { multiplier: 453.592, unit: "g" };
+    }
+
+    if (/^(ml|milliliters?|millilitres?)$/.test(u)) {
+      return { multiplier: 1, unit: "ml" };
+    }
+
+    if (/^(dl|deciliters?|decilitres?)$/.test(u)) {
+      return { multiplier: 100, unit: "ml" };
+    }
+
+    if (/^(cl|centiliters?|centilitres?)$/.test(u)) {
+      return { multiplier: 10, unit: "ml" };
+    }
+
+    if (/^(tbsp|tablespoons?|msk)$/.test(u)) {
+      return { multiplier: 15, unit: "ml" };
+    }
+
+    if (/^(tsp|teaspoons?|tsk)$/.test(u)) {
+      return { multiplier: 5, unit: "ml" };
+    }
+
+    if (/^(cup|cups)$/.test(u)) {
+      return { multiplier: 240, unit: "ml" };
+    }
+
+    if (/^(krm)$/.test(u)) {
+      return { multiplier: 1, unit: "ml" };
     }
 
     if (
-      u === "g" ||
-      u === "gr" ||
-      u.includes("gram")
+      /^(pc|pcs|piece|pieces|each|egg|eggs|st|st\.|package|packages)$/.test(u)
     ) {
-      return { amount: 1, unit: "g" };
-    }
-
-    if (
-      u === "oz" ||
-      u.includes("ounce")
-    ) {
-      return { amount: 28.3495, unit: "g" };
-    }
-
-    if (
-      u === "lb" ||
-      u === "lbs" ||
-      u.includes("pound")
-    ) {
-      return { amount: 453.592, unit: "g" };
-    }
-
-    if (
-      u === "pc" ||
-      u === "pcs" ||
-      u.includes("piece") ||
-      u === "each" ||
-      u === "egg" ||
-      u === "eggs"
-    ) {
-      return { amount: 1, unit: "pcs" };
+      return { multiplier: 1, unit: "pcs" };
     }
 
     return null;
   }
 
-  // Сначала пробуем получить количество из структурированных данных API.
+  const candidates = [rawOriginal, rawDisplay, rawName].filter(Boolean);
+
+  const prefixPattern =
+    /^\s*(?:ca\.?\s*)?(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:[.,]\d+)?)\s*(kg|kgs|kilograms?|g|gr|grams?|oz|ounces?|lb|lbs|pounds?|ml|milliliters?|millilitres?|dl|deciliters?|decilitres?|cl|centiliters?|centilitres?|tbsp|tablespoons?|msk|tsp|teaspoons?|tsk|cup|cups|krm|pcs?|pieces?|each|eggs?|egg|st\.?|packages?)\b/i;
+
+  let textUnit = "";
+
+  for (const candidate of candidates) {
+    const match = candidate.match(prefixPattern);
+
+    if (match) {
+      textUnit = match[2];
+      break;
+    }
+  }
+
   const rawValue = item.quantity?.value;
-  const rawUnit = String(item.quantity?.unit ?? "");
+  const rawUnit = String(item.quantity?.unit ?? "").trim();
 
   if (rawValue !== undefined && rawValue !== null && rawValue !== "") {
     const numericValue = parseNumber(String(rawValue));
-    const normalized = normalizeUnit(rawUnit);
+    const normalized = normalizeUnit(rawUnit || textUnit);
 
     if (Number.isFinite(numericValue) && numericValue >= 0) {
       if (normalized) {
         amount = String(
-          Number((numericValue * normalized.amount).toFixed(3))
+          Number((numericValue * normalized.multiplier).toFixed(3))
         );
         unit = normalized.unit;
-      } else if (!rawUnit) {
+      } else {
+        const ingredientText = candidates.join(" ").toLowerCase();
+        const isEgg = /egg|ägg|яйц/.test(ingredientText);
+
         amount = String(numericValue);
-        unit = "g";
+        unit = isEgg ? "pcs" : "g";
       }
     }
   }
 
-  // Если API не передал количество отдельно, ищем его в текстовых полях.
-  const candidates = [rawOriginal, rawDisplay, rawName].filter(Boolean);
-
   if (!amount) {
     for (const candidate of candidates) {
-      const match = candidate.match(
-        /^\s*(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:[.,]\d+)?)\s*(kg|kilograms?|g|grams?|gr|oz|ounces?|lb|lbs|pounds?|pcs?|pieces?|pc|eggs?|egg)\b/i
-      );
+      const match = candidate.match(prefixPattern);
 
       if (match) {
         const numericValue = parseNumber(match[1]);
@@ -606,7 +626,7 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
           normalized
         ) {
           amount = String(
-            Number((numericValue * normalized.amount).toFixed(3))
+            Number((numericValue * normalized.multiplier).toFixed(3))
           );
           unit = normalized.unit;
           break;
@@ -622,24 +642,23 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
 
         if (Number.isFinite(numericValue) && numericValue >= 0) {
           amount = String(numericValue);
-          unit = "g";
+          const isEgg = /egg|ägg|яйц/i.test(candidates.join(" "));
+          unit = isEgg ? "pcs" : "g";
           break;
         }
       }
     }
   }
 
-  // Определяем название ингредиента.
   let name = rawName || rawDisplay || rawOriginal || "Ингредиент";
 
   if (!rawName) {
-    name = name.replace(
-      /^\s*(?:\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:[.,]\d+)?)\s*(?:kg|kilograms?|g|grams?|gr|oz|ounces?|lb|lbs|pounds?|pcs?|pieces?|pc|eggs?|egg)?\s*/i,
-      ""
-    );
+    name = name.replace(prefixPattern, "");
   }
 
-  name = name.replace(/^[\s,;:–—-]+|[\s,;:–—-]+$/g, "").trim();
+  name = name
+    .replace(/^[\s,;:–—-]+|[\s,;:–—-]+$/g, "")
+    .trim();
 
   return {
     name: translateIngredientName(name || rawName || "Ингредиент"),
@@ -647,6 +666,7 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
     unit,
   };
 }
+
 
 function applyOnlineRecipe(recipe: ApiRecipe) {
   const sourceIngredients = recipe.ingredients ?? [];
