@@ -447,7 +447,6 @@ function translateIngredientName(name: string): string {
     almonds: "Миндаль",
     almond: "Миндаль",
     walnuts: "Грецкие орехи",
-    "walnuts": "Грецкие орехи",
     raisins: "Изюм",
     raisin: "Изюм",
     "condensed milk": "Сгущённое молоко",
