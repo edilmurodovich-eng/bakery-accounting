@@ -477,6 +477,7 @@ function translateIngredientName(name: string): string {
     .trim();
 }
 
+
 function parseIngredientAmount(item: ApiRecipeIngredient): {
   name: string;
   amount: string;
@@ -486,101 +487,151 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
   const rawDisplay = String(item.display ?? "").trim();
   const rawOriginal = String(item.original ?? "").trim();
 
-  const rawUnit = String(item.quantity?.unit ?? "").toLowerCase();
-  const rawValue = item.quantity?.value;
-
   let amount = "";
   let unit: Unit = "g";
 
+  function parseNumber(value: string): number {
+    const normalized = value.replace(",", ".").trim();
+
+    if (normalized.includes(" ")) {
+      const parts = normalized.split(/\s+/);
+      const fraction = parts[1]?.split("/");
+
+      if (fraction?.length === 2) {
+        return (
+          Number(parts[0]) +
+          Number(fraction[0]) / Number(fraction[1])
+        );
+      }
+    }
+
+    if (normalized.includes("/")) {
+      const parts = normalized.split("/");
+      return Number(parts[0]) / Number(parts[1]);
+    }
+
+    return Number(normalized);
+  }
+
+  function normalizeUnit(value: string): {
+    amount: number;
+    unit: Unit;
+  } | null {
+    const u = value.toLowerCase().trim();
+
+    if (
+      u === "kg" ||
+      u.includes("kilogram")
+    ) {
+      return { amount: 1, unit: "kg" };
+    }
+
+    if (
+      u === "g" ||
+      u === "gr" ||
+      u.includes("gram")
+    ) {
+      return { amount: 1, unit: "g" };
+    }
+
+    if (
+      u === "oz" ||
+      u.includes("ounce")
+    ) {
+      return { amount: 28.3495, unit: "g" };
+    }
+
+    if (
+      u === "lb" ||
+      u === "lbs" ||
+      u.includes("pound")
+    ) {
+      return { amount: 453.592, unit: "g" };
+    }
+
+    if (
+      u === "pc" ||
+      u === "pcs" ||
+      u.includes("piece") ||
+      u === "each" ||
+      u === "egg" ||
+      u === "eggs"
+    ) {
+      return { amount: 1, unit: "pcs" };
+    }
+
+    return null;
+  }
+
+  // Сначала пробуем получить количество из структурированных данных API.
+  const rawValue = item.quantity?.value;
+  const rawUnit = String(item.quantity?.unit ?? "");
+
   if (rawValue !== undefined && rawValue !== null && rawValue !== "") {
-    const numericValue = Number(rawValue);
+    const numericValue = parseNumber(String(rawValue));
+    const normalized = normalizeUnit(rawUnit);
 
     if (Number.isFinite(numericValue) && numericValue >= 0) {
-      amount = String(numericValue);
-
-      if (
-        rawUnit === "kg" ||
-        rawUnit.includes("kilogram")
-      ) {
-        unit = "kg";
-      } else if (
-        rawUnit.includes("piece") ||
-        rawUnit.includes("pcs") ||
-        rawUnit === "each" ||
-        rawUnit === "egg"
-      ) {
-        unit = "pcs";
-      } else if (
-        rawUnit === "g" ||
-        rawUnit.includes("gram")
-      ) {
+      if (normalized) {
+        amount = String(
+          Number((numericValue * normalized.amount).toFixed(3))
+        );
+        unit = normalized.unit;
+      } else if (!rawUnit) {
+        amount = String(numericValue);
         unit = "g";
-      } else if (
-        rawUnit === "ml" ||
-        rawUnit.includes("milliliter") ||
-        rawUnit.includes("millilitre")
-      ) {
-        // В текущем калькуляторе нет отдельной единицы «мл».
-        // Не выдаём миллилитры за граммы.
-        amount = "";
-      } else if (rawUnit) {
-        // Не подставляем неизвестную единицу как граммы.
-        amount = "";
       }
     }
   }
 
-  const combined = rawOriginal || rawDisplay || rawName;
+  // Если API не передал количество отдельно, ищем его в текстовых полях.
+  const candidates = [rawOriginal, rawDisplay, rawName].filter(Boolean);
 
-  if (!amount && combined) {
-    const match = combined.match(
-      /^\s*(\d+(?:[.,]\d+)?|\d+\s+\d+\/\d+|\d+\/\d+)\s*(kg|kilograms?|g|grams?|gr|oz|ounces?|lb|pounds?|ml|milliliters?|millilitres?|l|liters?|litres?|cups?|c|tbsp|tablespoons?|tsp|teaspoons?|pcs?|pieces?|eggs?)?\b/i
-    );
+  if (!amount) {
+    for (const candidate of candidates) {
+      const match = candidate.match(
+        /^\s*(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:[.,]\d+)?)\s*(kg|kilograms?|g|grams?|gr|oz|ounces?|lb|lbs|pounds?|pcs?|pieces?|pc|eggs?|egg)\b/i
+      );
 
-    if (match) {
-      const rawAmount = match[1].replace(",", ".");
-      const parsed = Number(rawAmount);
-
-      if (Number.isFinite(parsed) && parsed >= 0) {
-        const foundUnit = (match[2] ?? "").toLowerCase();
+      if (match) {
+        const numericValue = parseNumber(match[1]);
+        const normalized = normalizeUnit(match[2]);
 
         if (
-          foundUnit === "kg" ||
-          foundUnit.startsWith("kilogram")
+          Number.isFinite(numericValue) &&
+          numericValue >= 0 &&
+          normalized
         ) {
-          amount = String(parsed);
-          unit = "kg";
-        } else if (
-          foundUnit === "g" ||
-          foundUnit === "gr" ||
-          foundUnit.startsWith("gram")
-        ) {
-          amount = String(parsed);
+          amount = String(
+            Number((numericValue * normalized.amount).toFixed(3))
+          );
+          unit = normalized.unit;
+          break;
+        }
+      }
+
+      const bareNumber = candidate.match(
+        /^\s*(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:[.,]\d+)?)\s*$/
+      );
+
+      if (bareNumber) {
+        const numericValue = parseNumber(bareNumber[1]);
+
+        if (Number.isFinite(numericValue) && numericValue >= 0) {
+          amount = String(numericValue);
           unit = "g";
-        } else if (
-          foundUnit.startsWith("piece") ||
-          foundUnit === "pc" ||
-          foundUnit === "pcs" ||
-          foundUnit.startsWith("egg")
-        ) {
-          amount = String(parsed);
-          unit = "pcs";
+          break;
         }
       }
     }
   }
 
+  // Определяем название ингредиента.
   let name = rawName || rawDisplay || rawOriginal || "Ингредиент";
 
-  if (rawName && rawOriginal) {
-    const prefix = rawOriginal.match(
-      /^\s*(?:\d+(?:[.,]\d+)?|\d+\s+\d+\/\d+|\d+\/\d+)\s*(?:kg|kilograms?|g|grams?|gr|oz|ounces?|lb|pounds?|ml|milliliters?|millilitres?|l|liters?|litres?|cups?|c|tbsp|tablespoons?|tsp|teaspoons?|pcs?|pieces?|eggs?)?\s*/i
-    );
-
-    if (prefix) name = rawName;
-  } else {
+  if (!rawName) {
     name = name.replace(
-      /^\s*(?:\d+(?:[.,]\d+)?|\d+\s+\d+\/\d+|\d+\/\d+)\s*(?:kg|kilograms?|g|grams?|gr|oz|ounces?|lb|pounds?|ml|milliliters?|millilitres?|l|liters?|litres?|cups?|c|tbsp|tablespoons?|tsp|teaspoons?|pcs?|pieces?|eggs?)?\s*/i,
+      /^\s*(?:\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:[.,]\d+)?)\s*(?:kg|kilograms?|g|grams?|gr|oz|ounces?|lb|lbs|pounds?|pcs?|pieces?|pc|eggs?|egg)?\s*/i,
       ""
     );
   }
