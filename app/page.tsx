@@ -19,7 +19,7 @@ import {
   Search,
 } from "lucide-react";
 
-type Unit = "g" | "kg" | "pcs";
+type Unit = "g" | "kg" | "ml" | "pcs";
 type Period = "today" | "month" | "custom";
 
 type Ingredient = {
