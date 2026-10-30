@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo, useState } from "react";
@@ -82,6 +81,9 @@ type ApiRecipe = {
 
 type ApiRecipeResponse = {
   results?: ApiRecipe[];
+  tinyPlatesResponse?: {
+    results?: ApiRecipe[];
+  };
   error?: string;
 };
 
@@ -227,180 +229,6 @@ function StatCard({
   );
 }
 
-export default function Home() {
-  const [tab, setTab] = useState<"cost" | "finance">("cost");
-
-  const [ingredients, setIngredients] = useState<Ingredient[]>([
-    { id: 1, name: "Мука", amount: "500", unit: "g", price: "10000" },
-    { id: 2, name: "Сахар", amount: "200", unit: "g", price: "15000" },
-    { id: 3, name: "Яйца", amount: "3", unit: "pcs", price: "2000" },
-  ]);
-
-  const [yieldCount, setYieldCount] = useState("10");
-  const [manualCost, setManualCost] = useState("");
-  const [productName, setProductName] = useState("");
-  const [sellingPrice, setSellingPrice] = useState("");
-  const [utilityCost, setUtilityCost] = useState("0");
-  const [recipeSearch, setRecipeSearch] = useState("");
-  const [apiRecipes, setApiRecipes] = useState<ApiRecipe[]>([]);
-  const [isSearchingRecipes, setIsSearchingRecipes] = useState(false);
-  const [recipeSearchError, setRecipeSearchError] = useState("");
-
-  const [products, setProducts] = useState<Product[]>([]);
-  const [sales, setSales] = useState<Sale[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-
-  const [saleDate, setSaleDate] = useState(today());
-  const [saleProductId, setSaleProductId] = useState("");
-  const [saleQuantity, setSaleQuantity] = useState("1");
-  const [salePrice, setSalePrice] = useState("");
-
-  const [expenseDate, setExpenseDate] = useState(today());
-  const [expenseName, setExpenseName] = useState("");
-  const [expenseAmount, setExpenseAmount] = useState("");
-
-  const [period, setPeriod] = useState<Period>("today");
-  const [fromDate, setFromDate] = useState(today());
-  const [toDate, setToDate] = useState(today());
-  const [notice, setNotice] = useState("");
-
-  const ingredientTotal = useMemo(
-    () =>
-      ingredients.reduce((sum, item) => {
-        const amount = Math.max(0, Number(item.amount) || 0);
-        const price = Math.max(0, Number(item.price) || 0);
-        return sum + (item.unit === "g" ? (amount / 1000) * price : amount * price);
-      }, 0),
-    [ingredients]
-  );
-
-  const totalBatchCost =
-    ingredientTotal + Math.max(0, Number(utilityCost) || 0);
-
-  const calculatedCost =
-    manualCost.trim() !== "" &&
-    Number.isFinite(Number(manualCost)) &&
-    Number(manualCost) >= 0
-      ? Number(manualCost)
-      : totalBatchCost / Math.max(1, Number(yieldCount) || 1);
-
-  const filteredSales = useMemo(
-    () =>
-      sales.filter((sale) => {
-        if (period === "today") return sale.date === today();
-        if (period === "month")
-          return sale.date.slice(0, 7) === today().slice(0, 7);
-        return sale.date >= fromDate && sale.date <= toDate;
-      }),
-    [sales, period, fromDate, toDate]
-  );
-
-  const filteredExpenses = useMemo(
-    () =>
-      expenses.filter((expense) => {
-        if (period === "today") return expense.date === today();
-        if (period === "month")
-          return expense.date.slice(0, 7) === today().slice(0, 7);
-        return expense.date >= fromDate && expense.date <= toDate;
-      }),
-    [expenses, period, fromDate, toDate]
-  );
-
-  const revenue = filteredSales.reduce(
-    (sum, sale) => sum + sale.price * sale.quantity,
-    0
-  );
-  const goodsCost = filteredSales.reduce(
-    (sum, sale) => sum + sale.cost * sale.quantity,
-    0
-  );
-  const expenseTotal = filteredExpenses.reduce(
-    (sum, expense) => sum + expense.amount,
-    0
-  );
-  const profit = revenue - goodsCost - expenseTotal;
-
-  function updateIngredient(id: number, key: keyof Ingredient, value: string) {
-    setIngredients((current) =>
-      current.map((item) => (item.id === id ? { ...item, [key]: value } : item))
-    );
-  }
-
-  function addIngredient() {
-    setIngredients((current) => [
-      ...current,
-      { id: Date.now(), name: "", amount: "", unit: "g", price: "" },
-    ]);
-  }
-
-  function applyRecipe(recipe: Recipe) {
-    setIngredients(
-      recipe.ingredients.map((item, index) => ({
-        ...item,
-        id: Date.now() + index,
-      }))
-    );
-    setProductName(recipe.name);
-    setYieldCount(recipe.yieldCount);
-    setManualCost("");
-    setRecipeSearch(recipe.name);
-    setNotice(
-      `Загружен пример рецепта «${recipe.name}». Проверьте количества и цены.`
-    );
-  }
-
-  async function searchOnlineRecipes(query: string) {
-    const search = query.trim();
-
-    if (search.length < 2) {
-      setApiRecipes([]);
-      setRecipeSearchError("Введите название изделия минимум из 2 символов.");
-      return;
-    }
-
-    setIsSearchingRecipes(true);
-    setRecipeSearchError("");
-    setApiRecipes([]);
-
-    try {
-      const response = await fetch(
-        `/api/recipes?query=${encodeURIComponent(search)}`,
-        { cache: "no-store" }
-      );
-
-      const data: ApiRecipeResponse = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Не удалось найти рецепты.");
-      }
-
-      const results = Array.isArray(data.results)
-        ? data.results.filter(
-            (recipe) =>
-              Boolean(recipe.title) &&
-              Array.isArray(recipe.ingredients) &&
-              recipe.ingredients.length > 0
-          )
-        : [];
-
-      setApiRecipes(results);
-
-      if (results.length === 0) {
-        setRecipeSearchError(
-          "Рецепты не найдены. Попробуйте другое название."
-        );
-      }
-    } catch (error) {
-      setApiRecipes([]);
-      setRecipeSearchError(
-        error instanceof Error ? error.message : "Ошибка поиска рецептов."
-      );
-    } finally {
-      setIsSearchingRecipes(false);
-    }
-  }
-
-  
 function translateIngredientName(name: string): string {
   const translations: Record<string, string> = {
     flour: "Мука",
@@ -475,11 +303,8 @@ function translateIngredientName(name: string): string {
 
   if (translations[cleaned]) return translations[cleaned];
 
-  return name
-    .replace(/^\s*[-•]\s*/, "")
-    .trim();
+  return name.replace(/^\s*[-•]\s*/, "").trim();
 }
-
 
 function parseIngredientAmount(item: ApiRecipeIngredient): {
   name: string;
@@ -489,6 +314,8 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
   const rawName = String(item.localName ?? item.name ?? "").trim();
   const rawDisplay = String(item.display ?? "").trim();
   const rawOriginal = String(item.original ?? "").trim();
+
+  const candidates = [rawOriginal, rawDisplay, rawName].filter(Boolean);
 
   let amount = "";
   let unit: Unit = "g";
@@ -501,8 +328,10 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
       const fraction = parts[1]?.split("/");
 
       if (fraction?.length === 2) {
-        return Number(parts[0]) +
-          Number(fraction[0]) / Number(fraction[1]);
+        return (
+          Number(parts[0]) +
+          Number(fraction[0]) / Number(fraction[1])
+        );
       }
     }
 
@@ -514,11 +343,10 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
     return Number(normalized);
   }
 
-  function normalizeUnit(value: string): {
-    multiplier: number;
-    unit: Unit;
-  } | null {
-    const u = value.toLowerCase().trim();
+  function normalizeUnit(
+    value: string
+  ): { multiplier: number; unit: Unit } | null {
+    const u = value.toLowerCase().trim().replace(/\.$/, "");
 
     if (/^(kg|kgs|kilograms?)$/.test(u)) {
       return { multiplier: 1, unit: "kg" };
@@ -565,15 +393,13 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
     }
 
     if (
-      /^(pc|pcs|piece|pieces|each|egg|eggs|st|st\.|package|packages)$/.test(u)
+      /^(pc|pcs|piece|pieces|each|egg|eggs|st|package|packages)$/.test(u)
     ) {
       return { multiplier: 1, unit: "pcs" };
     }
 
     return null;
   }
-
-  const candidates = [rawOriginal, rawDisplay, rawName].filter(Boolean);
 
   const prefixPattern =
     /^\s*(?:ca\.?\s*)?(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:[.,]\d+)?)\s*(kg|kgs|kilograms?|g|gr|grams?|oz|ounces?|lb|lbs|pounds?|ml|milliliters?|millilitres?|dl|deciliters?|decilitres?|cl|centiliters?|centilitres?|tbsp|tablespoons?|msk|tsp|teaspoons?|tsk|cup|cups|krm|pcs?|pieces?|each|eggs?|egg|st\.?|packages?)\b/i;
@@ -667,34 +493,219 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
   };
 }
 
+export default function Home() {
+  const [tab, setTab] = useState<"cost" | "finance">("cost");
 
-function applyOnlineRecipe(recipe: ApiRecipe) {
-  const sourceIngredients = recipe.ingredients ?? [];
+  const [ingredients, setIngredients] = useState<Ingredient[]>([
+    { id: 1, name: "Мука", amount: "500", unit: "g", price: "10000" },
+    { id: 2, name: "Сахар", amount: "200", unit: "g", price: "15000" },
+    { id: 3, name: "Яйца", amount: "3", unit: "pcs", price: "2000" },
+  ]);
 
-  const parsedIngredients: Ingredient[] = sourceIngredients.map(
-    (item, index) => {
-      const parsed = parseIngredientAmount(item);
+  const [yieldCount, setYieldCount] = useState("10");
+  const [manualCost, setManualCost] = useState("");
+  const [productName, setProductName] = useState("");
+  const [sellingPrice, setSellingPrice] = useState("");
+  const [utilityCost, setUtilityCost] = useState("0");
+  const [recipeSearch, setRecipeSearch] = useState("");
+  const [apiRecipes, setApiRecipes] = useState<ApiRecipe[]>([]);
+  const [isSearchingRecipes, setIsSearchingRecipes] = useState(false);
+  const [recipeSearchError, setRecipeSearchError] = useState("");
 
-      return {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+
+  const [saleDate, setSaleDate] = useState(today());
+  const [saleProductId, setSaleProductId] = useState("");
+  const [saleQuantity, setSaleQuantity] = useState("1");
+  const [salePrice, setSalePrice] = useState("");
+
+  const [expenseDate, setExpenseDate] = useState(today());
+  const [expenseName, setExpenseName] = useState("");
+  const [expenseAmount, setExpenseAmount] = useState("");
+
+  const [period, setPeriod] = useState<Period>("today");
+  const [fromDate, setFromDate] = useState(today());
+  const [toDate, setToDate] = useState(today());
+  const [notice, setNotice] = useState("");
+
+  // Граммы и миллилитры пересчитываются по цене за килограмм и литр.
+  const ingredientTotal = useMemo(
+    () =>
+      ingredients.reduce((sum, item) => {
+        const amount = Math.max(0, Number(item.amount) || 0);
+        const price = Math.max(0, Number(item.price) || 0);
+
+        const multiplier =
+          item.unit === "g" || item.unit === "ml" ? 0.001 : 1;
+
+        return sum + amount * price * multiplier;
+      }, 0),
+    [ingredients]
+  );
+
+  const totalBatchCost =
+    ingredientTotal + Math.max(0, Number(utilityCost) || 0);
+
+  const calculatedCost =
+    manualCost.trim() !== "" &&
+    Number.isFinite(Number(manualCost)) &&
+    Number(manualCost) >= 0
+      ? Number(manualCost)
+      : totalBatchCost / Math.max(1, Number(yieldCount) || 1);
+
+  const filteredSales = useMemo(
+    () =>
+      sales.filter((sale) => {
+        if (period === "today") return sale.date === today();
+        if (period === "month")
+          return sale.date.slice(0, 7) === today().slice(0, 7);
+        return sale.date >= fromDate && sale.date <= toDate;
+      }),
+    [sales, period, fromDate, toDate]
+  );
+
+  const filteredExpenses = useMemo(
+    () =>
+      expenses.filter((expense) => {
+        if (period === "today") return expense.date === today();
+        if (period === "month")
+          return expense.date.slice(0, 7) === today().slice(0, 7);
+        return expense.date >= fromDate && expense.date <= toDate;
+      }),
+    [expenses, period, fromDate, toDate]
+  );
+
+  const revenue = filteredSales.reduce(
+    (sum, sale) => sum + sale.price * sale.quantity,
+    0
+  );
+
+  const goodsCost = filteredSales.reduce(
+    (sum, sale) => sum + sale.cost * sale.quantity,
+    0
+  );
+
+  const expenseTotal = filteredExpenses.reduce(
+    (sum, expense) => sum + expense.amount,
+    0
+  );
+
+  const profit = revenue - goodsCost - expenseTotal;
+
+  function updateIngredient(id: number, key: keyof Ingredient, value: string) {
+    setIngredients((current) =>
+      current.map((item) => (item.id === id ? { ...item, [key]: value } : item))
+    );
+  }
+
+  function addIngredient() {
+    setIngredients((current) => [
+      ...current,
+      { id: Date.now(), name: "", amount: "", unit: "g", price: "" },
+    ]);
+  }
+
+  function applyRecipe(recipe: Recipe) {
+    setIngredients(
+      recipe.ingredients.map((item, index) => ({
+        ...item,
         id: Date.now() + index,
-        name: parsed.name,
-        amount: parsed.amount,
-        unit: parsed.unit,
-        price: "",
-      };
+      }))
+    );
+
+    setProductName(recipe.name);
+    setYieldCount(recipe.yieldCount);
+    setManualCost("");
+    setRecipeSearch(recipe.name);
+    setNotice(
+      `Загружен пример рецепта «${recipe.name}». Проверьте количества и цены.`
+    );
+  }
+
+  async function searchOnlineRecipes(query: string) {
+    const search = query.trim();
+
+    if (search.length < 2) {
+      setApiRecipes([]);
+      setRecipeSearchError("Введите название изделия минимум из 2 символов.");
+      return;
     }
-  );
 
-  setIngredients(parsedIngredients);
-  setProductName(recipe.title ?? "");
-  setRecipeSearch(recipe.title ?? "");
-  setManualCost("");
-  setYieldCount("1");
-  setNotice(
-    "Рецепт загружен. Проверьте перевод, количества и единицы измерения. Если количество не найдено, заполните его вручную."
-  );
-}
+    setIsSearchingRecipes(true);
+    setRecipeSearchError("");
+    setApiRecipes([]);
 
+    try {
+      const response = await fetch(
+        `/api/recipes?query=${encodeURIComponent(search)}`,
+        { cache: "no-store" }
+      );
+
+      const data: ApiRecipeResponse = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Не удалось найти рецепты.");
+      }
+
+      const recipeResults = Array.isArray(data.results)
+        ? data.results
+        : Array.isArray(data.tinyPlatesResponse?.results)
+          ? data.tinyPlatesResponse.results
+          : [];
+
+      const results = recipeResults.filter(
+        (recipe) =>
+          Boolean(recipe.title) &&
+          Array.isArray(recipe.ingredients) &&
+          recipe.ingredients.length > 0
+      );
+
+      setApiRecipes(results);
+
+      if (results.length === 0) {
+        setRecipeSearchError(
+          "Рецепты не найдены. Попробуйте другое название."
+        );
+      }
+    } catch (error) {
+      setApiRecipes([]);
+      setRecipeSearchError(
+        error instanceof Error ? error.message : "Ошибка поиска рецептов."
+      );
+    } finally {
+      setIsSearchingRecipes(false);
+    }
+  }
+
+  function applyOnlineRecipe(recipe: ApiRecipe) {
+    const sourceIngredients = recipe.ingredients ?? [];
+
+    const parsedIngredients: Ingredient[] = sourceIngredients.map(
+      (item, index) => {
+        const parsed = parseIngredientAmount(item);
+
+        return {
+          id: Date.now() + index,
+          name: parsed.name,
+          amount: parsed.amount,
+          unit: parsed.unit,
+          price: "",
+        };
+      }
+    );
+
+    setIngredients(parsedIngredients);
+    setProductName(recipe.title ?? "");
+    setRecipeSearch(recipe.title ?? "");
+    setManualCost("");
+    setYieldCount("1");
+
+    setNotice(
+      "Рецепт загружен. Проверьте названия, количества и единицы измерения. Введите закупочные цены ингредиентов для расчёта стоимости."
+    );
+  }
 
   function handleProductNameChange(value: string) {
     setProductName(value);
@@ -814,10 +825,12 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
         <header className="mb-7 overflow-hidden rounded-3xl bg-[#58152b] text-white shadow-lg">
           <div className="relative p-5 sm:p-8">
             <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full border border-white/10" />
+
             <div className="relative flex items-center gap-3">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#d4a9b8] text-[#58152b]">
                 <Wheat size={25} />
               </div>
+
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.23em] text-[#f0d5df]">
                   Учёт кондитерской
@@ -827,6 +840,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                 </h1>
               </div>
             </div>
+
             <p className="relative mt-5 max-w-lg text-sm leading-6 text-white/75 sm:text-base">
               Себестоимость, продажи и прибыль — в одном удобном месте.
             </p>
@@ -854,6 +868,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
             >
               <Calculator size={21} />
             </span>
+
             <span className="min-w-0">
               <span className="block text-sm font-bold">Себестоимость</span>
               <span className="mt-1 block text-xs text-[#81717a]">
@@ -882,6 +897,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
             >
               <ChartNoAxesCombined size={21} />
             </span>
+
             <span className="min-w-0">
               <span className="block text-sm font-bold">Продажи и прибыль</span>
               <span className="mt-1 block text-xs text-[#81717a]">
@@ -920,6 +936,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f1e5ea] text-[#781f3b]">
                   <Search size={20} />
                 </div>
+
                 <div>
                   <h3 className="font-bold">Поиск рецепта</h3>
                   <p className="mt-1 text-xs text-[#81717a]">
@@ -977,6 +994,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                       <p className="font-bold text-[#58152b]">
                         {recipe.title}
                       </p>
+
                       <p className="mt-1 text-xs text-[#81717a]">
                         Ингредиентов: {recipe.ingredients?.length ?? 0}
                       </p>
@@ -1007,6 +1025,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                 <h4 className="mb-3 text-sm font-bold text-[#50343f]">
                   Примеры рецептов
                 </h4>
+
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {recipes.map((recipe) => (
                     <button
@@ -1019,6 +1038,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                   ))}
                 </div>
               </div>
+
               <p className="mt-3 text-xs leading-5 text-[#81717a]">
                 Интернет-рецепты могут иметь другие единицы измерения и выход.
                 Проверяйте состав и количества перед расчётом. Примеры
@@ -1031,52 +1051,108 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f1e5ea] text-[#781f3b]">
                   <Package size={20} />
                 </div>
+
                 <div>
                   <h3 className="font-bold">Состав рецепта</h3>
                   <p className="mt-1 text-xs text-[#81717a]">
-                    Цена за килограмм или штуку
+                    Цена за килограмм, литр или штуку
                   </p>
                 </div>
               </div>
 
               <div className="space-y-4">
-                {ingredients.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="min-w-0 rounded-2xl border border-[#eee5ea] bg-[#fffafb] p-3 sm:p-4"
-                  >
-                    <div className="mb-3 flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#986b7b]">
-                        Ингредиент {index + 1}
-                      </span>
-                      <button
-                        onClick={() =>
-                          setIngredients((current) =>
-                            current.filter((entry) => entry.id !== item.id)
-                          )
-                        }
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-[#a56b7a] hover:bg-[#f8e9ee]"
-                        aria-label="Удалить ингредиент"
-                      >
-                        <Trash2 size={17} />
-                      </button>
-                    </div>
+                {ingredients.map((item, index) => {
+                  const amount = Math.max(0, Number(item.amount) || 0);
+                  const price = Math.max(0, Number(item.price) || 0);
 
-                    <label className="mb-3 block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                      Название
-                      <input
-                        className={`${field} mt-1.5`}
-                        placeholder="Например, мука"
-                        value={item.name}
-                        onChange={(e) =>
-                          updateIngredient(item.id, "name", e.target.value)
-                        }
-                      />
-                    </label>
+                  const ingredientCost =
+                    amount *
+                    price *
+                    (item.unit === "g" || item.unit === "ml" ? 0.001 : 1);
 
-                    <div className="grid min-w-0 grid-cols-2 gap-3">
-                      <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                        Количество
+                  return (
+                    <div
+                      key={item.id}
+                      className="min-w-0 rounded-2xl border border-[#eee5ea] bg-[#fffafb] p-3 sm:p-4"
+                    >
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-[#986b7b]">
+                          Ингредиент {index + 1}
+                        </span>
+
+                        <button
+                          onClick={() =>
+                            setIngredients((current) =>
+                              current.filter((entry) => entry.id !== item.id)
+                            )
+                          }
+                          className="flex h-9 w-9 items-center justify-center rounded-lg text-[#a56b7a] hover:bg-[#f8e9ee]"
+                          aria-label="Удалить ингредиент"
+                        >
+                          <Trash2 size={17} />
+                        </button>
+                      </div>
+
+                      <label className="mb-3 block min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                        Название
+                        <input
+                          className={`${field} mt-1.5`}
+                          placeholder="Например, мука"
+                          value={item.name}
+                          onChange={(e) =>
+                            updateIngredient(item.id, "name", e.target.value)
+                          }
+                        />
+                      </label>
+
+                      <div className="grid min-w-0 grid-cols-2 gap-3">
+                        <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                          Количество
+                          <input
+                            className={`${field} mt-1.5`}
+                            type="number"
+                            min="0"
+                            step="any"
+                            inputMode="decimal"
+                            placeholder="0"
+                            value={item.amount}
+                            onChange={(e) =>
+                              updateIngredient(
+                                item.id,
+                                "amount",
+                                e.target.value
+                              )
+                            }
+                          />
+                        </label>
+
+                        <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                          Единица
+                          <select
+                            className={`${field} mt-1.5`}
+                            value={item.unit}
+                            onChange={(e) =>
+                              updateIngredient(
+                                item.id,
+                                "unit",
+                                e.target.value as Unit
+                              )
+                            }
+                          >
+                            <option value="g">Граммы (г)</option>
+                            <option value="kg">Килограммы (кг)</option>
+                            <option value="ml">Миллилитры (мл)</option>
+                            <option value="pcs">Штуки (шт.)</option>
+                          </select>
+                        </label>
+                      </div>
+
+                      <label className="mt-3 block min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                        {item.unit === "pcs"
+                          ? "Цена за 1 штуку (сум)"
+                          : item.unit === "ml"
+                            ? "Цена за 1 литр (сум)"
+                            : "Цена за 1 кг (сум)"}
                         <input
                           className={`${field} mt-1.5`}
                           type="number"
@@ -1084,66 +1160,24 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                           step="any"
                           inputMode="decimal"
                           placeholder="0"
-                          value={item.amount}
+                          value={item.price}
                           onChange={(e) =>
-                            updateIngredient(item.id, "amount", e.target.value)
+                            updateIngredient(item.id, "price", e.target.value)
                           }
                         />
                       </label>
 
-                      <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                        Единица
-                        <select
-                          className={`${field} mt-1.5`}
-                          value={item.unit}
-                          onChange={(e) =>
-                            updateIngredient(
-                              item.id,
-                              "unit",
-                              e.target.value as Unit
-                            )
-                          }
-                        >
-                          <option value="g">Граммы (г)</option>
-<option value="kg">Килограммы (кг)</option>
-<option value="ml">Миллилитры (мл)</option>
-<option value="pcs">Штуки (шт.)</option>
-                        </select>
-                      </label>
+                      <div className="mt-3 flex items-center justify-between gap-2 rounded-xl bg-[#f1e5ea] px-3 py-2.5">
+                        <span className="text-xs text-[#765666]">
+                          Стоимость ингредиента
+                        </span>
+                        <span className="text-sm font-bold text-[#58152b]">
+                          {money(ingredientCost)}
+                        </span>
+                      </div>
                     </div>
-
-                    <label className="mt-3 block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                      {item.unit === "pcs"
-                        ? "Цена за 1 штуку (сум)"
-                        : "Цена за 1 кг (сум)"}
-                      <input
-                        className={`${field} mt-1.5`}
-                        type="number"
-                        min="0"
-                        step="any"
-                        inputMode="decimal"
-                        placeholder="0"
-                        value={item.price}
-                        onChange={(e) =>
-                          updateIngredient(item.id, "price", e.target.value)
-                        }
-                      />
-                    </label>
-
-                    <div className="mt-3 flex items-center justify-between gap-2 rounded-xl bg-[#f1e5ea] px-3 py-2.5">
-                      <span className="text-xs text-[#765666]">
-                        Стоимость ингредиента
-                      </span>
-                      <span className="text-sm font-bold text-[#58152b]">
-                        {money(
-                          (Number(item.amount) || 0) *
-                            (Number(item.price) || 0) *
-                            (item.unit === "g" ? 0.001 : 1)
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <button
@@ -1184,6 +1218,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f1e5ea] text-[#781f3b]">
                   <Flame size={20} />
                 </div>
+
                 <div>
                   <h3 className="font-bold">Электричество и газ</h3>
                   <p className="mt-1 text-xs text-[#81717a]">
@@ -1226,6 +1261,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f1e5ea] text-[#781f3b]">
                   <CircleDollarSign size={20} />
                 </div>
+
                 <div>
                   <h3 className="font-bold">Стоимость одного изделия</h3>
                   <p className="mt-1 text-xs text-[#81717a]">
@@ -1329,6 +1365,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                           Цена продажи: {money(product.price)}
                         </p>
                       </div>
+
                       <button
                         onClick={() => {
                           setProducts((current) =>
@@ -1492,6 +1529,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
 
             <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
               <h3 className="mb-4 font-bold">Период отчёта</h3>
+
               <div className="grid grid-cols-3 gap-2">
                 {(
                   [
@@ -1525,6 +1563,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                       onChange={(e) => setFromDate(e.target.value)}
                     />
                   </label>
+
                   <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                     Конец периода
                     <input
@@ -1548,16 +1587,19 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
 
               <div className="grid grid-cols-2 gap-3">
                 <StatCard label="Выручка" value={money(revenue)} icon={Wallet} />
+
                 <StatCard
                   label="Себестоимость продаж"
                   value={money(goodsCost)}
                   icon={Package}
                 />
+
                 <StatCard
                   label="Дополнительные расходы"
                   value={money(expenseTotal)}
                   icon={ReceiptText}
                 />
+
                 <div className="min-w-0 rounded-2xl bg-[#e8f1e8] p-4 text-[#365b40] sm:p-5">
                   <div className="mb-4 flex items-center justify-between gap-2">
                     <span className="text-xs font-medium leading-5 sm:text-sm">
@@ -1565,6 +1607,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                     </span>
                     <TrendingUp size={19} />
                   </div>
+
                   <div className="break-words text-xl font-bold sm:text-2xl">
                     {money(profit)}
                   </div>
@@ -1575,9 +1618,11 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                 <p className="text-sm text-white/70">
                   Итоговая прибыль за период
                 </p>
+
                 <p className="mt-2 break-words text-3xl font-bold sm:text-4xl">
                   {money(profit)}
                 </p>
+
                 <p className="mt-3 text-xs leading-5 text-white/70">
                   Выручка − себестоимость проданных изделий − дополнительные
                   расходы.
@@ -1587,6 +1632,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
 
             <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
               <h3 className="mb-4 font-bold">Продажи за выбранный период</h3>
+
               {filteredSales.length === 0 ? (
                 <p className="rounded-xl bg-[#fffafb] px-4 py-6 text-center text-sm text-[#81717a]">
                   За этот период продаж пока нет.
@@ -1602,14 +1648,17 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                         <p className="break-words text-sm font-bold">
                           {sale.productName}
                         </p>
+
                         <p className="mt-1 text-xs text-[#81717a]">
                           {sale.date} · {sale.quantity} шт. × {money(sale.price)}
                         </p>
                       </div>
+
                       <div className="shrink-0 text-right">
                         <p className="text-sm font-bold">
                           {money(sale.price * sale.quantity)}
                         </p>
+
                         <button
                           className="mt-2 text-xs text-[#a56b7a] underline"
                           onClick={() =>
@@ -1631,6 +1680,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
               <h3 className="mb-4 font-bold">
                 Расходы за выбранный период
               </h3>
+
               {filteredExpenses.length === 0 ? (
                 <p className="rounded-xl bg-[#fffafb] px-4 py-6 text-center text-sm text-[#81717a]">
                   За этот период дополнительных расходов пока нет.
@@ -1646,14 +1696,17 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                         <p className="break-words text-sm font-bold">
                           {expense.name}
                         </p>
+
                         <p className="mt-1 text-xs text-[#81717a]">
                           {expense.date}
                         </p>
                       </div>
+
                       <div className="shrink-0 text-right">
                         <p className="text-sm font-bold">
                           {money(expense.amount)}
                         </p>
+
                         <button
                           className="mt-2 text-xs text-[#a56b7a] underline"
                           onClick={() =>
@@ -1689,20 +1742,24 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
         <hr />
 
         <h3>Итоги</h3>
+
         <table>
           <tbody>
             <tr>
               <td>Выручка</td>
               <td>{money(revenue)}</td>
             </tr>
+
             <tr>
               <td>Себестоимость проданных изделий</td>
               <td>{money(goodsCost)}</td>
             </tr>
+
             <tr>
               <td>Дополнительные расходы</td>
               <td>{money(expenseTotal)}</td>
             </tr>
+
             <tr>
               <td>
                 <strong>Чистая прибыль</strong>
@@ -1715,6 +1772,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
         </table>
 
         <h3>Продажи</h3>
+
         <table>
           <thead>
             <tr>
@@ -1726,6 +1784,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
               <th>Себестоимость</th>
             </tr>
           </thead>
+
           <tbody>
             {filteredSales.map((sale) => (
               <tr key={sale.id}>
@@ -1737,6 +1796,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                 <td>{money(sale.cost * sale.quantity)}</td>
               </tr>
             ))}
+
             {filteredSales.length === 0 && (
               <tr>
                 <td colSpan={6}>За выбранный период продаж нет.</td>
@@ -1746,6 +1806,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
         </table>
 
         <h3>Дополнительные расходы</h3>
+
         <table>
           <thead>
             <tr>
@@ -1754,6 +1815,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
               <th>Сумма</th>
             </tr>
           </thead>
+
           <tbody>
             {filteredExpenses.map((expense) => (
               <tr key={expense.id}>
@@ -1762,6 +1824,7 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                 <td>{money(expense.amount)}</td>
               </tr>
             ))}
+
             {filteredExpenses.length === 0 && (
               <tr>
                 <td colSpan={3}>За выбранный период расходов нет.</td>
