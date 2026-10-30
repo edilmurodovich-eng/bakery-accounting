@@ -1105,8 +1105,9 @@ function applyOnlineRecipe(recipe: ApiRecipe) {
                           }
                         >
                           <option value="g">Граммы (г)</option>
-                          <option value="kg">Килограммы (кг)</option>
-                          <option value="pcs">Штуки (шт.)</option>
+<option value="kg">Килограммы (кг)</option>
+<option value="ml">Миллилитры (мл)</option>
+<option value="pcs">Штуки (шт.)</option>
                         </select>
                       </label>
                     </div>
