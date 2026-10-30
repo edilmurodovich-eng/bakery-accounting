@@ -429,7 +429,6 @@ function translateIngredientName(name: string): string {
     "dark chocolate": "Тёмный шоколад",
     "vegetable oil": "Растительное масло",
     oil: "Масло",
-    water: "Вода",
     starch: "Крахмал",
     cornstarch: "Кукурузный крахмал",
     "cream cheese": "Сливочный сыр",
