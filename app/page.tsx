@@ -62,12 +62,15 @@ type Recipe = {
 
 type ApiRecipeIngredient = {
   display?: string;
+  localName?: string;
   name?: string;
   original?: string;
   quantity?: {
     value?: number | string;
     unit?: string;
+    max?: number;
   };
+  optional?: boolean;
 };
 
 type ApiRecipe = {
