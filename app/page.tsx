@@ -416,7 +416,7 @@ function translateIngredientName(name: string): string {
     cream: "Сливки",
     "heavy cream": "Жирные сливки",
     "whipping cream": "Сливки для взбивания",
-    sour cream: "Сметана",
+    "sour cream": "Сметана",
     yeast: "Дрожжи",
     "baking powder": "Разрыхлитель",
     "baking soda": "Пищевая сода",
