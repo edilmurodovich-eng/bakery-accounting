@@ -86,7 +86,19 @@ type ApiRecipeResponse = {
   };
   error?: string;
 };
-
+type ApiPrice = {
+  name: string;
+  price: number;
+  unit: "kg" | "l" | "pcs";
+  source: string;
+  date: string;
+};
+type ApiPriceResponse = {
+  region: string;
+  currency: string;
+  note: string;
+  prices: ApiPrice[];
+};
 const money = (value: number) =>
   new Intl.NumberFormat("ru-RU", {
     maximumFractionDigits: 0,
