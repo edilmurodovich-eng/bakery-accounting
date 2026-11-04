@@ -689,11 +689,6 @@ export default function Home() {
     return;
   }
 
-  setIsSearchingRecipes(true);
-  setRecipeSearchError("");
-  setApiRecipes([]);
-
-  // Сравниваем названия без учёта регистра и буквы ё.
   const normalize = (value: string) =>
     value
       .toLocaleLowerCase("ru-RU")
@@ -704,7 +699,29 @@ export default function Home() {
 
   const normalizedSearch = normalize(search);
 
+  setIsSearchingRecipes(true);
+  setRecipeSearchError("");
+  setApiRecipes([]);
+
   try {
+    // Сначала ищем среди встроенных рецептов.
+    const localRecipe = recipes.find((recipe) => {
+      const name = normalize(recipe.name);
+
+      return (
+        name === normalizedSearch ||
+        name.includes(normalizedSearch) ||
+        normalizedSearch.includes(name)
+      );
+    });
+
+    if (localRecipe) {
+      applyRecipe(localRecipe);
+      setRecipeSearch(search);
+      return;
+    }
+
+    // Если встроенного рецепта нет — обращаемся к Racion.
     const response = await fetch(
       `/api/recipes?query=${encodeURIComponent(search)}`,
       { cache: "no-store" }
@@ -731,28 +748,25 @@ export default function Home() {
         return false;
       }
 
-      const normalizedTitle = normalize(recipe.title);
+      const title = normalize(recipe.title);
 
       return (
-        normalizedTitle === normalizedSearch ||
-        normalizedTitle.includes(normalizedSearch) ||
-        normalizedSearch.includes(normalizedTitle)
+        title === normalizedSearch ||
+        title.includes(normalizedSearch) ||
+        normalizedSearch.includes(title)
       );
     });
 
     if (!bestRecipe) {
       setRecipeSearchError(
         data.error ||
-          "Точное совпадение не найдено. Попробуйте другое название."
+          "Подходящий рецепт не найден. Попробуйте другое название."
       );
       return;
     }
 
     applyOnlineRecipe(bestRecipe);
-
-    // Оставляем в поиске название, которое ввёл пользователь.
     setRecipeSearch(search);
-    setRecipeSearchError("");
   } catch (error) {
     setRecipeSearchError(
       error instanceof Error
