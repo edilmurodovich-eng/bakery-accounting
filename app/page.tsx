@@ -693,6 +693,17 @@ export default function Home() {
   setRecipeSearchError("");
   setApiRecipes([]);
 
+  // Сравниваем названия без учёта регистра и буквы ё.
+  const normalize = (value: string) =>
+    value
+      .toLocaleLowerCase("ru-RU")
+      .replace(/ё/g, "е")
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim()
+      .replace(/\s+/g, " ");
+
+  const normalizedSearch = normalize(search);
+
   try {
     const response = await fetch(
       `/api/recipes?query=${encodeURIComponent(search)}`,
@@ -711,21 +722,36 @@ export default function Home() {
         ? data.tinyPlatesResponse.results
         : [];
 
-    const bestRecipe = recipeResults.find(
-      (recipe) =>
-        Boolean(recipe.title) &&
-        Array.isArray(recipe.ingredients) &&
-        recipe.ingredients.length > 0
-    );
+    const bestRecipe = recipeResults.find((recipe) => {
+      if (
+        !recipe.title ||
+        !Array.isArray(recipe.ingredients) ||
+        recipe.ingredients.length === 0
+      ) {
+        return false;
+      }
+
+      const normalizedTitle = normalize(recipe.title);
+
+      return (
+        normalizedTitle === normalizedSearch ||
+        normalizedTitle.includes(normalizedSearch) ||
+        normalizedSearch.includes(normalizedTitle)
+      );
+    });
 
     if (!bestRecipe) {
       setRecipeSearchError(
-        "Подходящий рецепт не найден. Попробуйте другое название."
+        data.error ||
+          "Точное совпадение не найдено. Попробуйте другое название."
       );
       return;
     }
 
     applyOnlineRecipe(bestRecipe);
+
+    // Оставляем в поиске название, которое ввёл пользователь.
+    setRecipeSearch(search);
     setRecipeSearchError("");
   } catch (error) {
     setRecipeSearchError(
@@ -757,7 +783,6 @@ export default function Home() {
 
     setIngredients(parsedIngredients);
     setProductName(recipe.title ?? "");
-    setRecipeSearch(recipe.title ?? "");
     setManualCost("");
     setYieldCount("1");
 
