@@ -811,7 +811,7 @@ export default function Home() {
         price: "",
       };
     })
-    .filter((item): item is Ingredient => item !== null);
+    .filter((item): item is NonNullable<typeof item> => item !== null);
 
   if (parsedIngredients.length === 0) {
     setRecipeSearchError(
