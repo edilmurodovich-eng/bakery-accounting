@@ -637,59 +637,62 @@ export default function Home() {
   }
 
   async function searchOnlineRecipes(query: string) {
-    const search = query.trim();
+  const search = query.trim();
 
-    if (search.length < 2) {
-      setApiRecipes([]);
-      setRecipeSearchError("Введите название изделия минимум из 2 символов.");
+  if (search.length < 2) {
+    setApiRecipes([]);
+    setRecipeSearchError("Введите название изделия минимум из 2 символов.");
+    return;
+  }
+
+  setIsSearchingRecipes(true);
+  setRecipeSearchError("");
+  setApiRecipes([]);
+
+  try {
+    const response = await fetch(
+      `/api/recipes?query=${encodeURIComponent(search)}`,
+      { cache: "no-store" }
+    );
+
+    const data: ApiRecipeResponse = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Не удалось найти рецепт.");
+    }
+
+    const recipeResults = Array.isArray(data.results)
+      ? data.results
+      : Array.isArray(data.tinyPlatesResponse?.results)
+        ? data.tinyPlatesResponse.results
+        : [];
+
+    const bestRecipe = recipeResults.find(
+      (recipe) =>
+        Boolean(recipe.title) &&
+        Array.isArray(recipe.ingredients) &&
+        recipe.ingredients.length > 0
+    );
+
+    if (!bestRecipe) {
+      setRecipeSearchError(
+        "Подходящий рецепт не найден. Попробуйте другое название."
+      );
       return;
     }
 
-    setIsSearchingRecipes(true);
+    applyOnlineRecipe(bestRecipe);
     setRecipeSearchError("");
-    setApiRecipes([]);
-
-    try {
-      const response = await fetch(
-        `/api/recipes?query=${encodeURIComponent(search)}`,
-        { cache: "no-store" }
-      );
-
-      const data: ApiRecipeResponse = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Не удалось найти рецепты.");
-      }
-
-      const recipeResults = Array.isArray(data.results)
-        ? data.results
-        : Array.isArray(data.tinyPlatesResponse?.results)
-          ? data.tinyPlatesResponse.results
-          : [];
-
-      const results = recipeResults.filter(
-        (recipe) =>
-          Boolean(recipe.title) &&
-          Array.isArray(recipe.ingredients) &&
-          recipe.ingredients.length > 0
-      );
-
-      setApiRecipes(results);
-
-      if (results.length === 0) {
-        setRecipeSearchError(
-          "Рецепты не найдены. Попробуйте другое название."
-        );
-      }
-    } catch (error) {
-      setApiRecipes([]);
-      setRecipeSearchError(
-        error instanceof Error ? error.message : "Ошибка поиска рецептов."
-      );
-    } finally {
-      setIsSearchingRecipes(false);
-    }
+  } catch (error) {
+    setRecipeSearchError(
+      error instanceof Error
+        ? error.message
+        : "Ошибка поиска рецепта."
+    );
+  } finally {
+    setIsSearchingRecipes(false);
   }
+}
 
   function applyOnlineRecipe(recipe: ApiRecipe) {
     const sourceIngredients = recipe.ingredients ?? [];
