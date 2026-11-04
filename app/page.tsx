@@ -477,7 +477,7 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
   const rawValue = item.quantity?.value;
   const rawUnit = String(item.quantity?.unit ?? "").trim();
 
-  if (rawValue !== undefined && rawValue !== null && rawValue !== "") {
+  if (rawValue !== undefined && rawValue !== null) {
     const numericValue = parseNumber(String(rawValue));
     const normalized = normalizeUnit(rawUnit || textUnit);
 
