@@ -1272,28 +1272,42 @@ export default function Home() {
               </button>
 
               <div className="mt-5 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-                <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                  Сколько изделий получится из рецепта?
-                  <input
-                    className={`${field} mt-1.5`}
-                    type="number"
-                    min="1"
-                    step="1"
-                    inputMode="numeric"
-                    value={yieldCount}
-                    onChange={(e) => setYieldCount(e.target.value)}
-                  />
-                </label>
+  <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
+    Исходное количество изделий в рецепте
+    <input
+      className={`${field} mt-1.5`}
+      type="number"
+      min="1"
+      step="1"
+      inputMode="numeric"
+      value={yieldCount}
+      onChange={(e) => setYieldCount(e.target.value)}
+    />
+  </label>
 
-                <div className="rounded-xl bg-[#f1e5ea] p-4">
-                  <span className="text-xs font-medium text-[#765666]">
-                    Общая стоимость ингредиентов
-                  </span>
-                  <p className="mt-2 text-xl font-bold text-[#58152b]">
-                    {money(ingredientTotal)}
-                  </p>
-                </div>
-              </div>
+  <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
+    Сколько изделий нужно приготовить?
+    <input
+      className={`${field} mt-1.5`}
+      type="number"
+      min="1"
+      step="1"
+      inputMode="numeric"
+      placeholder="Введите количество"
+      value={targetYield}
+      onChange={(e) => setTargetYield(e.target.value)}
+    />
+  </label>
+
+  <div className="rounded-xl bg-[#f1e5ea] p-4">
+    <span className="text-xs font-medium text-[#765666]">
+      Общая стоимость ингредиентов
+    </span>
+    <p className="mt-2 text-xl font-bold text-[#58152b]">
+      {money(ingredientTotal)}
+    </p>
+  </div>
+</div>
             </section>
 
             <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
