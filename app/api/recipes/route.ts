@@ -1,128 +1,58 @@
 
+
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-type AnyObject = Record<string, any>;
+type RacionRecipeCard = {
+  ID?: string;
+  Title?: string;
+};
 
-async function translateIngredients(data: any, apiKey: string) {
-  const ingredientObjects: AnyObject[] = [];
+type RacionRecipePage = {
+  items?: RacionRecipeCard[];
+};
 
-  function collect(value: any, insideIngredients = false) {
-    if (Array.isArray(value)) {
-      value.forEach((item) => collect(item, insideIngredients));
-      return;
-    }
+type RacionIngredient = {
+  name?: string;
+  amount?: number;
+  unit?: "g" | "ml" | "pcs";
+};
 
-    if (!value || typeof value !== "object") return;
+type RacionRecipe = {
+  id?: string;
+  title?: string;
+  ingredients?: RacionIngredient[];
+};
 
-    const entries = Object.entries(value);
+function normalizeTitle(value: string): string {
+  return value
+    .toLocaleLowerCase("ru-RU")
+    .replace(/ё/g, "е")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
 
-    if (insideIngredients) {
-      const hasName = ["localName", "name", "display", "original"].some(
-        (key) => typeof value[key] === "string" && value[key].trim()
-      );
+function isRelevantTitle(query: string, title: string): boolean {
+  const q = normalizeTitle(query);
+  const t = normalizeTitle(title);
 
-      if (hasName) ingredientObjects.push(value);
-    }
+  if (!q || !t) return false;
+  if (q === t || t.includes(q) || q.includes(t)) return true;
 
-    for (const [key, child] of entries) {
-      const isIngredientField = key.toLowerCase().includes("ingredient");
-      collect(child, insideIngredients || isIngredientField);
-    }
-  }
+  const queryWords = q.split(" ").filter((word) => word.length > 2);
+  if (queryWords.length === 0) return false;
 
-  collect(data);
+  const titleWords = new Set(t.split(" "));
+  const matched = queryWords.filter((word) =>
+    titleWords.has(word)
+  ).length;
 
-  const uniqueNames = Array.from(
-    new Set(
-      ingredientObjects
-        .map(
-          (item) =>
-            item.localName || item.name || item.display || item.original
-        )
-        .filter(
-          (name): name is string =>
-            typeof name === "string" && name.trim().length > 0
-        )
-        .map((name) => name.trim())
-    )
-  );
-
-  if (uniqueNames.length === 0) return data;
-
-  const translated = new Map<string, string>();
-
-  const apiUrl = apiKey.endsWith(":fx")
-    ? "https://api-free.deepl.com/v2/translate"
-    : "https://api.deepl.com/v2/translate";
-
-  // DeepL принимает до 50 текстов за один запрос.
-  for (let i = 0; i < uniqueNames.length; i += 50) {
-    const batch = uniqueNames.slice(i, i + 50);
-
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `DeepL-Auth-Key ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text: batch,
-        target_lang: "RU",
-        context:
-          "Это названия ингредиентов для рецептов кондитерской. Используй правильные русские кулинарные названия.",
-      }),
-      cache: "no-store",
-      signal: AbortSignal.timeout(15000),
-    });
-
-    if (!response.ok) {
-      throw new Error(`DeepL API status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    batch.forEach((original, index) => {
-      const translation = result.translations?.[index]?.text;
-
-      if (translation) {
-        translated.set(original, translation.trim());
-      }
-    });
-  }
-
-  for (const item of ingredientObjects) {
-    const original =
-      item.localName || item.name || item.display || item.original;
-
-    if (typeof original !== "string") continue;
-
-    const russian = translated.get(original.trim());
-
-    if (!russian) continue;
-
-    // Переводим отображаемые названия, оригинал сохраняем.
-    item.localName = russian;
-
-    if ("name" in item) item.name = russian;
-    if ("display" in item) item.display = russian;
-  }
-
-  return data;
+  return matched === queryWords.length;
 }
 
 export async function GET(request: Request) {
-  const apiKey = process.env.TINYPLATES_API_KEY;
-  const deeplKey = process.env.DEEPL_API_KEY;
-
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "API-ключ Tiny Plates не настроен в Vercel." },
-      { status: 500 }
-    );
-  }
-
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("query")?.trim();
 
@@ -141,62 +71,132 @@ export async function GET(request: Request) {
   }
 
   try {
-    const url = new URL("https://api.tinyplates.dev/search");
-    url.searchParams.set("query", query);
-    url.searchParams.set("limit", "5");
+    const searchUrl = new URL("https://racion.app/api/recipes");
+    searchUrl.searchParams.set("q", query);
+    searchUrl.searchParams.set("lang", "ru");
+    searchUrl.searchParams.set("limit", "30");
 
-    const response = await fetch(url.toString(), {
+    const searchResponse = await fetch(searchUrl.toString(), {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        Accept: "application/json",
-      },
+      headers: { Accept: "application/json" },
       cache: "no-store",
       signal: AbortSignal.timeout(15000),
     });
 
-    if (!response.ok) {
-      console.error("Tiny Plates API status:", response.status);
-
+    if (!searchResponse.ok) {
       return NextResponse.json(
         {
           error:
-            response.status === 401 || response.status === 403
-              ? "Tiny Plates отклонил ключ или доступ к поиску."
-              : "Не удалось получить рецепты. Попробуй позже.",
+            searchResponse.status === 429
+              ? "Превышен лимит поиска. Попробуй позже."
+              : "Русская база рецептов временно недоступна.",
         },
-        { status: response.status === 429 ? 429 : 502 }
+        { status: searchResponse.status === 429 ? 429 : 502 }
       );
     }
 
-    let data = await response.json();
+    const searchData =
+      (await searchResponse.json()) as RacionRecipePage;
 
-    // Если ключ DeepL добавлен, переводим ингредиенты.
-    if (deeplKey) {
-      try {
-        data = await translateIngredients(data, deeplKey);
-      } catch (translationError) {
-        // Ошибка перевода не должна ломать поиск рецептов.
-        console.error("Ingredient translation error:", translationError);
-      }
+    const cards = Array.isArray(searchData.items)
+      ? searchData.items
+      : [];
+
+    const matchingCards = cards
+      .filter(
+        (card) =>
+          typeof card.ID === "string" &&
+          typeof card.Title === "string" &&
+          isRelevantTitle(query, card.Title)
+      )
+      .slice(0, 5);
+
+    if (matchingCards.length === 0) {
+      return NextResponse.json({
+        tinyPlatesResponse: { results: [] },
+        error: "В русской базе не найден рецепт с таким названием.",
+        provider: "Racion",
+      });
     }
 
-    return NextResponse.json(
-      {
-        tinyPlatesResponse: data,
-        translationEnabled: Boolean(deeplKey),
-      },
-      {
-        headers: {
-          "Cache-Control": "no-store",
-        },
+    for (const card of matchingCards) {
+      const detailUrl = new URL(
+        `https://racion.app/api/recipes/${encodeURIComponent(card.ID!)}`
+      );
+
+      detailUrl.searchParams.set("lang", "ru");
+
+      const detailResponse = await fetch(detailUrl.toString(), {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+        signal: AbortSignal.timeout(15000),
+      });
+
+      if (!detailResponse.ok) continue;
+
+      const recipe =
+        (await detailResponse.json()) as RacionRecipe;
+
+      if (
+        !Array.isArray(recipe.ingredients) ||
+        recipe.ingredients.length === 0
+      ) {
+        continue;
       }
-    );
+
+      const ingredients = recipe.ingredients
+        .filter(
+          (ingredient) =>
+            typeof ingredient.name === "string" &&
+            typeof ingredient.amount === "number" &&
+            Number.isFinite(ingredient.amount) &&
+            ingredient.amount >= 0 &&
+            ["g", "ml", "pcs"].includes(
+              String(ingredient.unit)
+            )
+        )
+        .map((ingredient) => ({
+          name: ingredient.name,
+          quantity: {
+            value: ingredient.amount,
+            unit: ingredient.unit,
+          },
+        }));
+
+      if (ingredients.length === 0) continue;
+
+      return NextResponse.json(
+        {
+          tinyPlatesResponse: {
+            results: [
+              {
+                title: recipe.title || card.Title,
+                ingredients,
+              },
+            ],
+          },
+          provider: "Racion",
+          translationEnabled: false,
+        },
+        {
+          headers: {
+            "Cache-Control": "no-store",
+          },
+        }
+      );
+    }
+
+    return NextResponse.json({
+      tinyPlatesResponse: { results: [] },
+      error: "В найденных рецептах нет подходящего списка ингредиентов.",
+      provider: "Racion",
+    });
   } catch (error) {
-    console.error("Recipe search error:", error);
+    console.error("Racion recipe search error:", error);
 
     return NextResponse.json(
-      { error: "Ошибка соединения с сервисом рецептов." },
+      { error: "Не удалось связаться с русской базой рецептов." },
       { status: 502 }
     );
   }
