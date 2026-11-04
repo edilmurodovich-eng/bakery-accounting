@@ -853,7 +853,7 @@ export default function Home() {
               setTab("cost");
               setNotice("");
             }}
-            className={`flex min-h-[76px] items-center gap-3 rounded-2xl border p-4 text-left transition ${
+            className={`flex w-full min-w-0 box-border min-h-[76px] items-center gap-3 rounded-2xl border p-4 text-left transition ${
               tab === "cost"
                 ? "border-[#781f3b] bg-white shadow-md"
                 : "border-[#e8dce1] bg-[#f1e5ea] hover:bg-white"
@@ -882,7 +882,7 @@ export default function Home() {
               setTab("finance");
               setNotice("");
             }}
-            className={`flex min-h-[76px] items-center gap-3 rounded-2xl border p-4 text-left transition ${
+            className={`flex w-full min-w-0 box-border min-h-[76px] items-center gap-3 rounded-2xl border p-4 text-left transition ${
               tab === "finance"
                 ? "border-[#781f3b] bg-white shadow-md"
                 : "border-[#e8dce1] bg-[#f1e5ea] hover:bg-white"
