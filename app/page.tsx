@@ -559,6 +559,7 @@ export default function Home() {
   ]);
 
   const [yieldCount, setYieldCount] = useState("10");
+  const [targetYield, setTargetYield] = useState("");
   const [manualCost, setManualCost] = useState("");
   const [productName, setProductName] = useState("");
   const [sellingPrice, setSellingPrice] = useState("");
