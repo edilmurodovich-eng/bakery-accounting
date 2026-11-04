@@ -318,6 +318,7 @@ function translateIngredientName(name: string): string {
   return name.replace(/^\s*[-•]\s*/, "").trim();
 }
 
+
 function parseIngredientAmount(item: ApiRecipeIngredient): {
   name: string;
   amount: string;
@@ -328,6 +329,7 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
   const rawOriginal = String(item.original ?? "").trim();
 
   const candidates = [rawOriginal, rawDisplay, rawName].filter(Boolean);
+  const ingredientText = candidates.join(" ").toLowerCase();
 
   let amount = "";
   let unit: Unit = "g";
@@ -340,10 +342,8 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
       const fraction = parts[1]?.split("/");
 
       if (fraction?.length === 2) {
-        return (
-          Number(parts[0]) +
-          Number(fraction[0]) / Number(fraction[1])
-        );
+        return Number(parts[0]) +
+          Number(fraction[0]) / Number(fraction[1]);
       }
     }
 
@@ -353,6 +353,46 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
     }
 
     return Number(normalized);
+  }
+
+  const isEgg = /egg|ägg|яйц/i.test(ingredientText);
+
+  const isLiquid =
+    /water|milk|cream|juice|oil|vinegar|syrup|honey|молок|сливк|вода|сок|масл[ао]? растительн|уксус|сироп/i.test(
+      ingredientText
+    );
+
+  const spoonWeights: Record<string, number> = {
+    flour: 8,
+    "wheat flour": 8,
+    sugar: 12.5,
+    salt: 18,
+    "garlic powder": 9,
+    "baking powder": 12,
+    "baking soda": 14,
+    cocoa: 6,
+    starch: 8,
+    yeast: 9,
+    cinnamon: 7,
+    мука: 8,
+    сахар: 12.5,
+    соль: 18,
+    "чесночный порошок": 9,
+    чеснок: 9,
+    разрыхлитель: 12,
+    сода: 14,
+    какао: 6,
+    крахмал: 8,
+    дрожжи: 9,
+    корица: 7,
+  };
+
+  function getSpoonWeight(): number {
+    for (const [name, weight] of Object.entries(spoonWeights)) {
+      if (ingredientText.includes(name)) return weight;
+    }
+
+    return 10;
   }
 
   function normalizeUnit(
@@ -389,24 +429,31 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
     }
 
     if (/^(tbsp|tablespoons?|msk)$/.test(u)) {
-      return { multiplier: 15, unit: "ml" };
+      return isLiquid
+        ? { multiplier: 15, unit: "ml" }
+        : { multiplier: getSpoonWeight(), unit: "g" };
     }
 
     if (/^(tsp|teaspoons?|tsk)$/.test(u)) {
-      return { multiplier: 5, unit: "ml" };
+      return isLiquid
+        ? { multiplier: 5, unit: "ml" }
+        : { multiplier: getSpoonWeight() / 3, unit: "g" };
     }
 
     if (/^(cup|cups)$/.test(u)) {
-      return { multiplier: 240, unit: "ml" };
+      if (isLiquid) return { multiplier: 240, unit: "ml" };
+
+      return {
+        multiplier: getSpoonWeight() * 16,
+        unit: "g",
+      };
     }
 
     if (/^(krm)$/.test(u)) {
-      return { multiplier: 1, unit: "ml" };
+      return { multiplier: isLiquid ? 1 : getSpoonWeight() / 15, unit: isLiquid ? "ml" : "g" };
     }
 
-    if (
-      /^(pc|pcs|piece|pieces|each|egg|eggs|st|package|packages)$/.test(u)
-    ) {
+    if (/^(pc|pcs|piece|pieces|each|egg|eggs|st|package|packages)$/.test(u)) {
       return { multiplier: 1, unit: "pcs" };
     }
 
@@ -414,7 +461,7 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
   }
 
   const prefixPattern =
-    /^\s*(?:ca\.?\s*)?(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:[.,]\d+)?)\s*(kg|kgs|kilograms?|g|gr|grams?|oz|ounces?|lb|lbs|pounds?|ml|milliliters?|millilitres?|dl|deciliters?|decilitres?|cl|centiliters?|centilitres?|tbsp|tablespoons?|msk|tsp|teaspoons?|tsk|cup|cups|krm|pcs?|pieces?|each|eggs?|egg|st\.?|packages?)\b/i;
+    /^\s*(?:ca\.?\s*)?(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:[.,]\d+)?)\s*(kg|kgs|kilograms?|g|gr|grams?|oz|ounces?|lb|lbs|pounds?|ml|milliliters?|millilitres?|dl|deciliters?|decilitres?|cl|centiliters?|centilitres?|tbsp|tablespoons?|msk|tsp|teaspoons?|tsk|cup|cups|krm|pcs?|pieces?|each|eggs?|st\.?|packages?)\b/i;
 
   let textUnit = "";
 
@@ -441,11 +488,8 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
         );
         unit = normalized.unit;
       } else {
-        const ingredientText = candidates.join(" ").toLowerCase();
-        const isEgg = /egg|ägg|яйц/.test(ingredientText);
-
         amount = String(numericValue);
-        unit = isEgg ? "pcs" : "g";
+        unit = isEgg ? "pcs" : isLiquid ? "ml" : "g";
       }
     }
   }
@@ -480,8 +524,7 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
 
         if (Number.isFinite(numericValue) && numericValue >= 0) {
           amount = String(numericValue);
-          const isEgg = /egg|ägg|яйц/i.test(candidates.join(" "));
-          unit = isEgg ? "pcs" : "g";
+          unit = isEgg ? "pcs" : isLiquid ? "ml" : "g";
           break;
         }
       }
@@ -504,6 +547,7 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
     unit,
   };
 }
+
 
 export default function Home() {
   const [tab, setTab] = useState<"cost" | "finance">("cost");
