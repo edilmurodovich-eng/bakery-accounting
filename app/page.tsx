@@ -588,19 +588,35 @@ export default function Home() {
   const [notice, setNotice] = useState("");
 
   // Граммы и миллилитры пересчитываются по цене за килограмм и литр.
+  const yieldMultiplier = useMemo(() => {
+  const original = Number(yieldCount);
+  const target = Number(targetYield);
+
+  if (
+    !Number.isFinite(original) ||
+    original <= 0 ||
+    !Number.isFinite(target) ||
+    target <= 0
+  ) {
+    return 1;
+  }
+
+  return target / original;
+}, [yieldCount, targetYield]);
   const ingredientTotal = useMemo(
-    () =>
-      ingredients.reduce((sum, item) => {
-        const amount = Math.max(0, Number(item.amount) || 0);
-        const price = Math.max(0, Number(item.price) || 0);
+  () =>
+    ingredients.reduce((sum, item) => {
+      const amount =
+        Math.max(0, Number(item.amount) || 0) * yieldMultiplier;
+      const price = Math.max(0, Number(item.price) || 0);
 
-        const multiplier =
-          item.unit === "g" || item.unit === "ml" ? 0.001 : 1;
+      const multiplier =
+        item.unit === "g" || item.unit === "ml" ? 0.001 : 1;
 
-        return sum + amount * price * multiplier;
-      }, 0),
-    [ingredients]
-  );
+      return sum + amount * price * multiplier;
+    }, 0),
+  [ingredients, yieldMultiplier]
+);
 
   const totalBatchCost =
     ingredientTotal + Math.max(0, Number(utilityCost) || 0);
