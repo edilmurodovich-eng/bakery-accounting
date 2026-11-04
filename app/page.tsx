@@ -847,7 +847,7 @@ export default function Home() {
           </div>
         </header>
 
-        <nav className="mb-7 grid min-w-0 grid-cols-2 gap-3">
+        <nav className="mb-7 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
           <button
             onClick={() => {
               setTab("cost");
