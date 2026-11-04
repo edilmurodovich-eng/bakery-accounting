@@ -61,6 +61,9 @@ type Recipe = {
 
 type ApiRecipeIngredient = {
   name?: string;
+  localName?: string;
+  display?: string;
+  original?: string;
   quantity?: {
     value?: number;
     unit?: "g" | "ml" | "pcs";
