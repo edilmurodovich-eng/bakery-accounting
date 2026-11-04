@@ -46,10 +46,17 @@ const prices = [
 ];
 
 export async function GET() {
-  return NextResponse.json({
-    region: "Наманганская область",
-    currency: "UZS",
-    note: "Это справочные средние цены за сентябрь 2026 года, не текущие магазинные цены.",
-    prices,
-  });
+  return NextResponse.json(
+    {
+      region: "Наманганская область",
+      currency: "UZS",
+      note: "Справочные средние цены за сентябрь 2026 года, не текущие магазинные цены.",
+      prices,
+    },
+    {
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+      },
+    }
+  );
 }
