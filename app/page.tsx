@@ -982,8 +982,8 @@ export default function Home() {
               >
                 <Search size={17} />
                 {isSearchingRecipes
-                  ? "Ищем рецепты..."
-                  : "Найти рецепты в интернете"}
+                  ? "Ищем подходящий рецепт..."
+                  : "Найти классический рецепт"}
               </button>
 
               {recipeSearchError && (
