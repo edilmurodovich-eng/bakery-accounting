@@ -60,16 +60,13 @@ type Recipe = {
 };
 
 type ApiRecipeIngredient = {
-  display?: string;
-  localName?: string;
   name?: string;
-  original?: string;
   quantity?: {
-    value?: number | string;
-    unit?: string;
-    max?: number;
+    value?: number;
+    unit?: "g" | "ml" | "pcs";
   };
-  optional?: boolean;
+  amount?: number;
+  unit?: "g" | "ml" | "pcs";
 };
 
 type ApiRecipe = {
@@ -779,31 +776,56 @@ export default function Home() {
 }
 
   function applyOnlineRecipe(recipe: ApiRecipe) {
-    const sourceIngredients = recipe.ingredients ?? [];
+  const sourceIngredients = recipe.ingredients ?? [];
 
-    const parsedIngredients: Ingredient[] = sourceIngredients.map(
-      (item, index) => {
-        const parsed = parseIngredientAmount(item);
+  const parsedIngredients: Ingredient[] = sourceIngredients
+    .map((item, index) => {
+      const name = item.name?.trim() || "Ингредиент";
 
-        return {
-          id: Date.now() + index,
-          name: parsed.name,
-          amount: parsed.amount,
-          unit: parsed.unit,
-          price: "",
-        };
+      // Racion передаёт количество внутри quantity.
+      const amount = item.quantity?.value ?? item.amount;
+
+      const rawUnit = item.quantity?.unit ?? item.unit;
+
+      const unit: Ingredient["unit"] =
+        rawUnit === "g" || rawUnit === "ml" || rawUnit === "pcs"
+          ? rawUnit
+          : "g";
+
+      if (
+        typeof amount !== "number" ||
+        !Number.isFinite(amount) ||
+        amount <= 0
+      ) {
+        return null;
       }
-    );
 
-    setIngredients(parsedIngredients);
-    setProductName(recipe.title ?? "");
-    setManualCost("");
-    setYieldCount("1");
+      return {
+        id: Date.now() + index,
+        name,
+        amount: String(amount),
+        unit,
+        price: "",
+      };
+    })
+    .filter((item): item is Ingredient => item !== null);
 
-    setNotice(
-      "Рецепт загружен. Проверьте названия, количества и единицы измерения. Введите закупочные цены ингредиентов для расчёта стоимости."
+  if (parsedIngredients.length === 0) {
+    setRecipeSearchError(
+      "Рецепт найден, но количества ингредиентов не удалось прочитать."
     );
+    return;
   }
+
+  setIngredients(parsedIngredients);
+  setProductName(recipe.title ?? "");
+  setManualCost("");
+  setYieldCount("1");
+
+  setNotice(
+    "Рецепт загружен. Проверьте количества и единицы измерения. Введите закупочные цены ингредиентов для расчёта стоимости."
+  );
+}
 
   function handleProductNameChange(value: string) {
     setProductName(value);
