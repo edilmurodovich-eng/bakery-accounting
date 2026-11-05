@@ -808,7 +808,44 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  useEffect(() => {
+    if (!user) {
+      setProducts([]);
+      return;
+    }
 
+    let cancelled = false;
+
+    async function loadProducts() {
+      const { data, error } = await supabase
+        .from("bakery_products")
+        .select("id, name, cost, price")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true });
+
+      if (cancelled) return;
+
+      if (error) {
+        console.error("Ошибка загрузки изделий:", error);
+        return;
+      }
+
+      setProducts(
+        (data ?? []).map((item) => ({
+          id: Number(item.id),
+          name: item.name,
+          cost: Number(item.cost),
+          price: Number(item.price),
+        }))
+      );
+    }
+
+    loadProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
   const [saleDate, setSaleDate] = useState(today());
   const [saleProductId, setSaleProductId] = useState("");
   const [saleQuantity, setSaleQuantity] = useState("1");
