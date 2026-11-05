@@ -12,6 +12,8 @@ import {
   ShoppingBag,
   TrendingUp,
   ReceiptText,
+  Instagram,
+  Send,
   CircleDollarSign,
   Flame,
   Search,
@@ -1181,6 +1183,32 @@ export default function Home() {
             <p className="relative mt-5 max-w-lg text-sm leading-6 text-white/75 sm:text-base">
               Себестоимость, продажи и прибыль — в одном удобном месте.
             </p>
+
+            <div className="relative mt-5 flex justify-end">
+              <div className="flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2">
+                <span className="text-xs font-semibold text-[#f0d5df]">Modigul профиль</span>
+                <a
+                  href="https://t.me/Modigulproducts"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Telegram Modigul"
+                  title="Telegram Modigul"
+                  className="rounded-full p-1.5 text-white transition hover:bg-white/15 hover:text-[#f0d5df]"
+                >
+                  <Send size={19} strokeWidth={2} />
+                </a>
+                <a
+                  href="https://www.instagram.com/modigul_official/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram Modigul"
+                  title="Instagram Modigul"
+                  className="rounded-full p-1.5 text-white transition hover:bg-white/15 hover:text-[#f0d5df]"
+                >
+                  <Instagram size={20} strokeWidth={2} />
+                </a>
+              </div>
+            </div>
           </div>
         </header>
 
