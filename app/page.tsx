@@ -2407,15 +2407,34 @@ console.log("Изделия:", data);
                         </p>
 
                         <button
-                          className="mt-2 text-xs text-[#a56b7a] underline"
-                          onClick={() =>
-                            setExpenses((current) =>
-                              current.filter((item) => item.id !== expense.id)
-                            )
-                          }
-                        >
-                          Удалить
-                        </button>
+  className="mt-2 text-xs text-[#a56b7a] underline"
+  onClick={async () => {
+    if (!user) {
+      setNotice("Необходимо войти в аккаунт.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("bakery_expenses")
+      .delete()
+      .eq("id", expense.id)
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.error("Ошибка удаления расхода:", error);
+      setNotice(`Ошибка удаления: ${error.message}`);
+      return;
+    }
+
+    setExpenses((current) =>
+      current.filter((item) => item.id !== expense.id)
+    );
+
+    setNotice("Расход удалён из базы данных.");
+  }}
+>
+  Удалить
+</button>
                       </div>
                     </div>
                   ))}
