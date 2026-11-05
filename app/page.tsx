@@ -1504,7 +1504,28 @@ console.log("Изделия:", data);
         </div>
       )}
       <div className="no-print mx-auto max-w-6xl px-4 pb-12 pt-5 sm:px-6 sm:pt-8 lg:px-8">
-        <header className="mb-7 overflow-hidden rounded-3xl bg-[#450914] text-white shadow-lg">
+
+  <div className="mb-3 flex justify-end">
+    <button
+      type="button"
+      onClick={async () => {
+        const { error } = await supabase.auth.signOut();
+
+        if (error) {
+          console.error("Ошибка выхода:", error);
+          setNotice(`Ошибка выхода: ${error.message}`);
+          return;
+        }
+
+        setNotice("");
+      }}
+      className="inline-flex items-center gap-2 rounded-xl border border-[#e8dce1] bg-white px-4 py-2 text-sm font-semibold text-[#781f3b] shadow-sm transition hover:bg-[#f1e5ea]"
+    >
+      Выйти
+    </button>
+  </div>
+
+  <header className="mb-7 overflow-hidden rounded-3xl bg-[#450914] text-white shadow-lg">
           <div className="relative p-5 sm:p-8">
             <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full border border-white/10" />
 
