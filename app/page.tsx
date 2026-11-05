@@ -1551,31 +1551,59 @@ console.log("Изделия:", data);
               Себестоимость, продажи и прибыль — в одном удобном месте.
             </p>
 
-            <div className="relative mt-5 flex justify-end">
-              <div className="flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2">
-                <span className="text-xs font-semibold text-[#f0d5df]">Modigul профиль</span>
-                <a
-                  href="https://t.me/Modigulproducts"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Telegram Modigul"
-                  title="Telegram Modigul"
-                  className="rounded-full p-1.5 text-white transition hover:bg-white/15 hover:text-[#f0d5df]"
-                >
-                  <Send size={19} strokeWidth={2} />
-                </a>
-                <a
-                  href="https://www.instagram.com/modigul_official/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Instagram Modigul"
-                  title="Instagram Modigul"
-                  className="rounded-full p-1.5 text-white transition hover:bg-white/15 hover:text-[#f0d5df]"
-                >
-                  <Instagram size={20} strokeWidth={2} />
-                </a>
-              </div>
-            </div>
+            <div className="relative mt-5 flex flex-wrap items-center justify-between gap-3">
+  <div className="flex items-center gap-1 rounded-full border border-white/15 bg-white/10 p-1">
+    <button
+      type="button"
+      onClick={() => setLanguage("uz")}
+      className={`rounded-full px-4 py-2 text-xs font-bold transition ${
+        language === "uz"
+          ? "bg-white text-[#781f3b]"
+          : "text-white hover:bg-white/10"
+      }`}
+    >
+      UZ
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setLanguage("ru")}
+      className={`rounded-full px-4 py-2 text-xs font-bold transition ${
+        language === "ru"
+          ? "bg-white text-[#781f3b]"
+          : "text-white hover:bg-white/10"
+      }`}
+    >
+      RU
+    </button>
+  </div>
+
+  <div className="flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2">
+    <span className="text-xs font-semibold text-[#f0d5df]">
+      Modigul профиль
+    </span>
+    <a
+      href="https://t.me/Modigulproducts"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Telegram Modigul"
+      title="Telegram Modigul"
+      className="rounded-full p-1.5 text-white transition hover:bg-white/15 hover:text-[#f0d5df]"
+    >
+      <Send size={19} strokeWidth={2} />
+    </a>
+    <a
+      href="https://www.instagram.com/modigul_official/"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Instagram Modigul"
+      title="Instagram Modigul"
+      className="rounded-full p-1.5 text-white transition hover:bg-white/15 hover:text-[#f0d5df]"
+    >
+      <Instagram size={20} strokeWidth={2} />
+    </a>
+  </div>
+</div>
           </div>
         </header>
 
