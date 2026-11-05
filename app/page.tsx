@@ -1194,7 +1194,72 @@ export default function Home() {
       : period === "month"
         ? `За месяц: ${today().slice(0, 7)}`
         : `С ${fromDate} по ${toDate}`;
+  const handleSignIn = async () => {
+    setAuthError("");
+    setIsSigningIn(true);
 
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setAuthError("Ошибка входа. Проверьте email и пароль.");
+    }
+
+    setIsSigningIn(false);
+  };
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#450914] text-[#d9b77b]">
+        Загрузка...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#450914] p-5">
+        <div className="w-full max-w-sm rounded-3xl bg-[#fff8f5] p-6 shadow-xl">
+          <h1 className="mb-2 text-center text-2xl font-bold text-[#450914]">
+            Modigul Accounting
+          </h1>
+          <p className="mb-6 text-center text-sm text-gray-500">
+            Войдите в свой аккаунт
+          </p>
+
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="mb-3 w-full rounded-xl border p-3"
+          />
+
+          <input
+            type="password"
+            placeholder="Пароль"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="mb-3 w-full rounded-xl border p-3"
+          />
+
+          {authError && (
+            <p className="mb-3 text-sm text-red-600">{authError}</p>
+          )}
+
+          <button
+            onClick={handleSignIn}
+            disabled={isSigningIn || !email || !password}
+            className="w-full rounded-xl bg-[#781f3b] p-3 font-bold text-white disabled:opacity-50"
+          >
+            {isSigningIn ? "Вход..." : "Войти"}
+          </button>
+        </div>
+      </main>
+    );
+  }
   return (
     <main className="min-h-screen bg-[#f5eef1] text-[#35252c]">
             {showSplash && (
