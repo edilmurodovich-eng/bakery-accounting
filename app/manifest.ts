@@ -16,7 +16,7 @@ export default function manifest(): MetadataRoute.Manifest {
         src: "/modigul-logo.png",
         sizes: "640x640",
         type: "image/png",
-        purpose: "any maskable",
+        purpose: "any",
       },
     ],
   };
