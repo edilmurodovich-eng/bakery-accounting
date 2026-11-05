@@ -824,6 +824,8 @@ export default function Home() {
         .order("created_at", { ascending: true });
 
       if (cancelled) return;
+      console.log("Загружено изделий из Supabase:", data?.length);
+console.log("Изделия:", data);
 
       if (error) {
         console.error("Ошибка загрузки изделий:", error);
