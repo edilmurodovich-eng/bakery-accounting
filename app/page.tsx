@@ -747,6 +747,15 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
 
 
 export default function Home() {
+    const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setShowSplash(false);
+    }, 2600);
+
+    return () => window.clearTimeout(timer);
+  }, []);
   const [tab, setTab] = useState<"cost" | "finance">("cost");
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([
