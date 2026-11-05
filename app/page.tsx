@@ -809,6 +809,44 @@ export default function Home() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   useEffect(() => {
+  if (!user) {
+    setExpenses([]);
+    return;
+  }
+
+  let cancelled = false;
+
+  async function loadExpenses() {
+    const { data, error } = await supabase
+      .from("bakery_expenses")
+      .select("id, expense_date, name, amount")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true });
+
+    if (cancelled) return;
+
+    if (error) {
+      console.error("Ошибка загрузки расходов:", error);
+      return;
+    }
+
+    setExpenses(
+      (data ?? []).map((item) => ({
+        id: Number(item.id),
+        date: item.expense_date,
+        name: item.name,
+        amount: Number(item.amount),
+      }))
+    );
+  }
+
+  loadExpenses();
+
+  return () => {
+    cancelled = true;
+  };
+}, [user]);
+  useEffect(() => {
     if (!user) {
       setProducts([]);
       return;
