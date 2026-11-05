@@ -748,7 +748,8 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
 
 
 export default function Home() {
-    const [authLoading, setAuthLoading] = useState(true);
+  const [language, setLanguage] = useState<"uz" | "ru">("uz");
+  const [authLoading, setAuthLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
