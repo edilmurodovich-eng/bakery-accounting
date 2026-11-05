@@ -1162,12 +1162,7 @@ export default function Home() {
           <div className="relative p-5 sm:p-8">
             <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full border border-white/10" />
 
-            <div className="relative flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#d4a9b8] text-[#58152b]">
-                <Wheat size={25} />
-              </div>
-
-              <div className="flex min-w-0 items-center gap-4">
+           <div className="relative flex items-center gap-4">
   <img
     src="/modigul-logo.png"
     alt="Modigul Accounting"
@@ -1175,6 +1170,14 @@ export default function Home() {
   />
 
   <div className="min-w-0">
+    <p className="text-[10px] font-bold uppercase tracking-[0.23em] text-[#f0d5df]">
+      Учёт кондитерской
+    </p>
+    <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+      Modigul Accounting
+    </h1>
+  </div>
+</div>
     <p className="text-[10px] font-bold uppercase tracking-[0.23em] text-[#f0d5df]">
       Учёт кондитерской
     </p>
