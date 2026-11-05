@@ -747,8 +747,57 @@ function parseIngredientAmount(item: ApiRecipeIngredient): {
 }
 
 
+
+
+
+const ingredientUzbekNames: Record<string, string> = {
+  "Мука": "Un",
+  "Пшеничная мука": "Bug‘doy uni",
+  "Сахар": "Şakar",
+  "Яйца": "Tuxum",
+  "Яйцо": "Tuxum",
+  "Сливочное масло": "Sariyog‘",
+  "Молоко": "Sut",
+  "Мёд": "Asal",
+  "Крахмал": "Kraxmal",
+  "Сметана": "Qaymoq",
+  "Сливки": "Qaymoq",
+  "Дрожжи": "Achitqi",
+  "Соль": "Tuz",
+  "Мясо": "Go‘sht",
+  "Лук": "Piyoz",
+  "Растительное масло": "O‘simlik yog‘i",
+  "Вода": "Suv",
+  "Какао": "Kakao",
+  "Шоколад": "Şokolad",
+  "Творог": "Tvorog",
+  "Сыр": "Pishloq",
+};
+function displayIngredientName(name: string, language: "uz" | "ru"): string {
+  return language === "uz" ? ingredientUzbekNames[name] ?? name : name;
+}
+function storeIngredientName(name: string, language: "uz" | "ru"): string {
+  if (language === "ru") return name;
+  return Object.entries(ingredientUzbekNames).find(([, uz]) => uz === name)?.[0] ?? name;
+}
+
+function translateRecipeName(name: string): string {
+  const names: Record<string, string> = {
+    "Наполеон": "Napoleon",
+    "Медовик": "Asalli tort",
+    "Бисквитный торт": "Biskvit tort",
+    "Печенье": "Peçenye",
+    "Булочки": "Buloçkalar",
+    "Хлеб": "Non",
+    "Самса": "Somsa",
+  };
+  return names[name] ?? name;
+}
+
 export default function Home() {
   const [language, setLanguage] = useState<"uz" | "ru">("uz");
+  const t = (ru: string, uz: string) => (language === "uz" ? uz : ru);
+  const displayMoney = (value: number) => new Intl.NumberFormat(language === "uz" ? "uz-UZ" : "ru-RU", { maximumFractionDigits: 0 }).format(Math.round(value)) + (language === "uz" ? " so‘m" : " сум");
   const [authLoading, setAuthLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [email, setEmail] = useState("");
@@ -1043,12 +1092,12 @@ console.log("Изделия:", data);
       }))
     );
 
-    setProductName(recipe.name);
+    setProductName(language === "uz" ? translateRecipeName(recipe.name) : recipe.name);
     setYieldCount(recipe.yieldCount);
     setManualCost("");
-    setRecipeSearch(recipe.name);
+    setRecipeSearch(language === "uz" ? translateRecipeName(recipe.name) : recipe.name);
     setNotice(
-      `Загружен пример рецепта «${recipe.name}». Проверьте количества и цены.`
+      t(`Загружен пример рецепта «${recipe.name}». Проверьте количества и цены.`, `«${translateRecipeName(recipe.name)}» retsept namunasi yuklandi. Miqdor va narxlarni tekshiring.`)
     );
   }
 
@@ -1057,7 +1106,7 @@ console.log("Изделия:", data);
 
   if (search.length < 2) {
     setApiRecipes([]);
-    setRecipeSearchError("Введите название изделия минимум из 2 символов.");
+    setRecipeSearchError(t("Введите название изделия минимум из 2 символов.", "Mahsulot nomini kamida 2 ta harf bilan kiriting."));
     return;
   }
 
@@ -1102,7 +1151,7 @@ console.log("Изделия:", data);
     const data: ApiRecipeResponse = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || "Не удалось найти рецепт.");
+      throw new Error(data.error || t("Не удалось найти рецепт.", "Retsept topilmadi."));
     }
 
     const recipeResults = Array.isArray(data.results)
@@ -1132,7 +1181,7 @@ console.log("Изделия:", data);
     if (!bestRecipe) {
       setRecipeSearchError(
         data.error ||
-          "Подходящий рецепт не найден. Попробуйте другое название."
+          t("Подходящий рецепт не найден. Попробуйте другое название.", "Mos retsept topilmadi. Boshqa nom bilan urinib ko‘ring.")
       );
       return;
     }
@@ -1143,7 +1192,7 @@ console.log("Изделия:", data);
     setRecipeSearchError(
       error instanceof Error
         ? error.message
-        : "Ошибка поиска рецепта."
+        : t("Ошибка поиска рецепта.", "Retsept qidirishda xatolik.")
     );
   } finally {
     setIsSearchingRecipes(false);
@@ -1187,7 +1236,7 @@ console.log("Изделия:", data);
 
   if (parsedIngredients.length === 0) {
     setRecipeSearchError(
-      "Рецепт найден, но количества ингредиентов не удалось прочитать."
+      t("Рецепт найден, но количества ингредиентов не удалось прочитать.", "Retsept topildi, ammo masalliqlar miqdorini o‘qib bo‘lmadi.")
     );
     return;
   }
@@ -1198,7 +1247,7 @@ console.log("Изделия:", data);
   setYieldCount("1");
 
   setNotice(
-    "Рецепт загружен. Проверьте количества и единицы измерения. Введите закупочные цены ингредиентов для расчёта стоимости."
+    t("Рецепт загружен. Проверьте количества и единицы измерения. Введите закупочные цены ингредиентов для расчёта стоимости.", "Retsept yuklandi. Miqdor va o‘lchov birliklarini tekshiring. Hisoblash uchun masalliqlarning xarid narxlarini kiriting.")
   );
 }
 
@@ -1208,7 +1257,7 @@ console.log("Изделия:", data);
 
  async function saveProduct() {
   if (!productName.trim()) {
-    setNotice("Укажите название изделия.");
+    setNotice(t("Укажите название изделия.", "Mahsulot nomini kiriting."));
     return;
   }
 
@@ -1217,12 +1266,12 @@ console.log("Изделия:", data);
     !Number.isFinite(Number(sellingPrice)) ||
     Number(sellingPrice) < 0
   ) {
-    setNotice("Укажите корректную цену продажи.");
+    setNotice(t("Укажите корректную цену продажи.", "To‘g‘ri sotuv narxini kiriting."));
     return;
   }
 
   if (!user) {
-    setNotice("Необходимо войти в аккаунт.");
+    setNotice(t("Необходимо войти в аккаунт.", "Hisobga kirish kerak."));
     return;
   }
 
@@ -1239,7 +1288,7 @@ console.log("Изделия:", data);
 
   if (error) {
     console.error("Ошибка сохранения изделия:", error);
-    setNotice("Не удалось сохранить изделие. Попробуйте ещё раз.");
+    setNotice(t("Не удалось сохранить изделие. Попробуйте ещё раз.", "Mahsulotni saqlab bo‘lmadi. Qayta urinib ko‘ring."));
     return;
   }
 
@@ -1256,7 +1305,7 @@ console.log("Изделия:", data);
   setProductName("");
   setSellingPrice("");
   setManualCost("");
-  setNotice("Изделие сохранено в базе данных.");
+  setNotice(t("Изделие сохранено в базе данных.", "Mahsulot bazaga saqlandi."));
 }
   async function addSale() {
   const product = products.find(
@@ -1264,7 +1313,7 @@ console.log("Изделия:", data);
   );
 
   if (!product) {
-    setNotice("Сначала добавьте изделие в калькуляторе.");
+    setNotice(t("Сначала добавьте изделие в калькуляторе.", "Avval kalkulyatorda mahsulot qo‘shing."));
     return;
   }
 
@@ -1276,12 +1325,12 @@ console.log("Изделия:", data);
     !Number.isFinite(Number(salePrice)) ||
     Number(salePrice) < 0
   ) {
-    setNotice("Проверьте дату, количество и цену продажи.");
+    setNotice(t("Проверьте дату, количество и цену продажи.", "Savdo sanasi, miqdori va narxini tekshiring."));
     return;
   }
 
   if (!user) {
-    setNotice("Необходимо войти в аккаунт.");
+    setNotice(t("Необходимо войти в аккаунт.", "Hisobga kirish kerak."));
     return;
   }
 
@@ -1301,7 +1350,7 @@ console.log("Изделия:", data);
 
   if (error) {
     console.error("Ошибка сохранения продажи:", error);
-    setNotice("Не удалось сохранить продажу. Попробуйте ещё раз.");
+    setNotice(t("Не удалось сохранить продажу. Попробуйте ещё раз.", "Savdoni saqlab bo‘lmadi. Qayta urinib ko‘ring."));
     return;
   }
 
@@ -1318,7 +1367,7 @@ console.log("Изделия:", data);
     },
   ]);
 
-  setNotice("Продажа сохранена в базе данных.");
+  setNotice(t("Продажа сохранена в базе данных.", "Savdo bazaga saqlandi."));
   setSaleQuantity("1");
 }
   async function addExpense() {
@@ -1328,12 +1377,12 @@ console.log("Изделия:", data);
     !Number.isFinite(Number(expenseAmount)) ||
     Number(expenseAmount) <= 0
   ) {
-    setNotice("Укажите дату, название и положительную сумму расхода.");
+    setNotice(t("Укажите дату, название и положительную сумму расхода.", "Xarajat sanasi, nomi va musbat summasini kiriting."));
     return;
   }
 
   if (!user) {
-    setNotice("Необходимо войти в аккаунт.");
+    setNotice(t("Необходимо войти в аккаунт.", "Hisobga kirish kerak."));
     return;
   }
 
@@ -1350,7 +1399,7 @@ console.log("Изделия:", data);
 
   if (error) {
   console.error("Ошибка сохранения расхода:", error);
-  setNotice(`Ошибка Supabase: ${error.message}`);
+  setNotice(t(`Ошибка Supabase: ${error.message}`, `Supabase xatoligi: ${error.message}`));
   return;
 }
 
@@ -1366,7 +1415,7 @@ console.log("Изделия:", data);
 
   setExpenseName("");
   setExpenseAmount("");
-  setNotice("Расход сохранён в базе данных.");
+  setNotice(t("Расход сохранён в базе данных.", "Xarajat bazaga saqlandi."));
 }
   function exportPdf() {
     setNotice("");
@@ -1375,10 +1424,10 @@ console.log("Изделия:", data);
 
   const reportPeriod =
     period === "today"
-      ? `За ${today()}`
+      ? t(`За ${today()}`, `Sana: ${today()}`)
       : period === "month"
-        ? `За месяц: ${today().slice(0, 7)}`
-        : `С ${fromDate} по ${toDate}`;
+        ? t(`За месяц: ${today().slice(0, 7)}`, `Oy: ${today().slice(0, 7)}`)
+        : t(`С ${fromDate} по ${toDate}`, `${fromDate} dan ${toDate} gacha`);
   const handleSignIn = async () => {
     setAuthError("");
     setIsSigningIn(true);
@@ -1389,7 +1438,7 @@ console.log("Изделия:", data);
     });
 
     if (error) {
-      setAuthError("Ошибка входа. Проверьте email и пароль.");
+      setAuthError(t("Ошибка входа. Проверьте email и пароль.", "Kirishda xatolik. Email va parolni tekshiring."));
     }
 
     setIsSigningIn(false);
@@ -1398,7 +1447,7 @@ console.log("Изделия:", data);
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#450914] text-[#d9b77b]">
-        Загрузка...
+        {t("Загрузка...", "Yuklanmoqda...")}
       </div>
     );
   }
@@ -1411,7 +1460,7 @@ console.log("Изделия:", data);
             Modigul Accounting
           </h1>
           <p className="mb-6 text-center text-sm text-gray-500">
-            Войдите в свой аккаунт
+            {t("Войдите в свой аккаунт", "Hisobingizga kiring")}
           </p>
 
           <input
@@ -1424,7 +1473,7 @@ console.log("Изделия:", data);
 
           <input
             type="password"
-            placeholder="Пароль"
+            placeholder={t("Пароль", "Parol")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="mb-3 w-full rounded-xl border p-3"
@@ -1439,7 +1488,7 @@ console.log("Изделия:", data);
             disabled={isSigningIn || !email || !password}
             className="w-full rounded-xl bg-[#781f3b] p-3 font-bold text-white disabled:opacity-50"
           >
-            {isSigningIn ? "Вход..." : "Войти"}
+            {isSigningIn ? t("Вход...", "Kirilmoqda...") : t("Войти", "Kirish")}
           </button>
         </div>
       </main>
@@ -1451,7 +1500,7 @@ console.log("Изделия:", data);
         <div
           className="modigul-splash fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#450914]"
           role="status"
-          aria-label="Modigul Accounting загружается"
+          aria-label={t("Modigul Accounting загружается", "Modigul Accounting yuklanmoqda")}
         >
           <style>{`
             @keyframes modigulLogoReveal {
@@ -1500,7 +1549,7 @@ console.log("Изделия:", data);
           />
 
           <p className="mt-6 px-6 text-center text-xs font-medium tracking-wide text-[#d9b77b] sm:text-sm">
-            Правообладатель: Mohijamol Akmaljonovna
+            {t("Правообладатель: Mohijamol Akmaljonovna", "Huquq egasi: Mohijamol Akmaljonovna")}
           </p>
         </div>
       )}
@@ -1514,7 +1563,7 @@ console.log("Изделия:", data);
 
         if (error) {
           console.error("Ошибка выхода:", error);
-          setNotice(`Ошибка выхода: ${error.message}`);
+          setNotice(t(`Ошибка выхода: ${error.message}`, `Chiqishda xatolik: ${error.message}`));
           return;
         }
 
@@ -1522,7 +1571,7 @@ console.log("Изделия:", data);
       }}
       className="inline-flex items-center gap-2 rounded-xl border border-[#e8dce1] bg-white px-4 py-2 text-sm font-semibold text-[#781f3b] shadow-sm transition hover:bg-[#f1e5ea]"
     >
-      Выйти
+      {t("Выйти", "Çiqiş")}
     </button>
   </div>
 
@@ -1539,7 +1588,7 @@ console.log("Изделия:", data);
 
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.23em] text-[#f0d5df]">
-                  {language === "uz" ? "Qandolatchilik hisobi" : "Учёт кондитерской"}
+                  {t("Учёт кондитерской", "Qandolatchilik hisobi")}
                 </p>
                 <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
                   Modigul Accounting
@@ -1548,9 +1597,7 @@ console.log("Изделия:", data);
             </div>
 
             <p className="relative mt-5 max-w-lg text-sm leading-6 text-white/75 sm:text-base">
-              {language === "uz"
-  ? "Tannarx, savdo va foyda — barchasi bir joyda."
-  : "Себестоимость, продажи и прибыль — в одном удобном месте."}
+              {t("Себестоимость, продажи и прибыль — в одном удобном месте.", "Tannarx, savdo va foyda — barchasi bir joyda.")}
             </p>
 
             <div className="relative mt-5 flex flex-wrap items-center justify-between gap-3">
@@ -1582,7 +1629,7 @@ console.log("Изделия:", data);
 
   <div className="flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2">
     <span className="text-xs font-semibold text-[#f0d5df]">
-      Modigul профиль
+      {t("Modigul профиль", "Modigul profili")}
     </span>
     <a
       href="https://t.me/Modigulproducts"
@@ -1632,9 +1679,9 @@ console.log("Изделия:", data);
             </span>
 
             <span className="min-w-0">
-              <span className="block text-sm font-bold">Себестоимость</span>
+              <span className="block text-sm font-bold">{t("Себестоимость", "Tannarx")}</span>
               <span className="mt-1 block text-xs text-[#81717a]">
-                Расчёт изделий
+                {t("Расчёт изделий", "Mahsulotlar hisobi")}
               </span>
             </span>
           </button>
@@ -1661,9 +1708,9 @@ console.log("Изделия:", data);
             </span>
 
             <span className="min-w-0">
-              <span className="block text-sm font-bold">Продажи и прибыль</span>
+              <span className="block text-sm font-bold">{t("Продажи и прибыль", "Savdo va foyda")}</span>
               <span className="mt-1 block text-xs text-[#81717a]">
-                Финансовый учёт
+                {t("Финансовый учёт", "Moliyaviy hisob")}
               </span>
             </span>
           </button>
@@ -1678,7 +1725,7 @@ console.log("Изделия:", data);
             <button
               onClick={() => setNotice("")}
               className="shrink-0 font-bold"
-              aria-label="Закрыть уведомление"
+              aria-label={t("Закрыть уведомление", "Bildirishnomani yopish")}
             >
               ×
             </button>
@@ -1688,9 +1735,9 @@ console.log("Изделия:", data);
         {tab === "cost" && (
           <>
             <SectionTitle
-              eyebrow="Раздел 01"
-              title="Калькулятор себестоимости"
-              description="Выберите пример рецепта или найдите рецепт в интернете. Все ингредиенты, количества и цены можно редактировать."
+              eyebrow={t("Раздел 01", "01-bo‘lim")}
+              title={t("Калькулятор себестоимости", "Tannarx kalkulyatori")}
+              description={t("Выберите пример рецепта или найдите рецепт в интернете. Все ингредиенты, количества и цены можно редактировать.", "Retsept namunasini tanlang yoki internetdan retsept qidiring. Barcha masalliqlar, miqdorlar va narxlarni o‘zgartirish mumkin.")}
             />
 
             <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
@@ -1700,18 +1747,18 @@ console.log("Изделия:", data);
                 </div>
 
                 <div>
-                  <h3 className="font-bold">Поиск рецепта</h3>
+                  <h3 className="font-bold">{t("Поиск рецепта", "Retsept qidirish")}</h3>
                   <p className="mt-1 text-xs text-[#81717a]">
-                    Поиск через интернет или выбор примера
+                    {t("Поиск через интернет или выбор примера", "Internetdan qidirish yoki namunani tanlash")}
                   </p>
                 </div>
               </div>
 
               <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                Название изделия или рецепта
+                {t("Название изделия или рецепта", "Mahsulot yoki retsept nomi")}
                 <input
                   className={`${field} mt-1.5`}
-                  placeholder="Например, Napoleon cake"
+                  placeholder={t("Например, Napoleon cake", "Masalan, Napoleon torti")}
                   value={recipeSearch}
                   onChange={(e) => {
                     setRecipeSearch(e.target.value);
@@ -1729,18 +1776,18 @@ console.log("Изделия:", data);
               >
                 <Search size={17} />
                 {isSearchingRecipes
-                  ? "Ищем подходящий рецепт..."
-                  : "Найти классический рецепт"}
+                  ? t("Ищем подходящий рецепт...", "Mos retsept qidirilmoqda...")
+                  : t("Найти классический рецепт", "Klassik retseptni topish")}
               </button>
 <label className="mt-3 block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-  Сколько изделий нужно приготовить?
+  {t("Сколько изделий нужно приготовить?", "Nechta mahsulot tayyorlamoqchisiz?")}
   <input
     className={`${field} mt-1.5`}
     type="number"
     min="1"
     step="1"
     inputMode="numeric"
-    placeholder="Введите количество"
+    placeholder={t("Введите количество", "Miqdorni kiriting")}
     value={targetYield}
     onChange={(e) => setTargetYield(e.target.value)}
   />
@@ -1756,26 +1803,24 @@ console.log("Изделия:", data);
 
               <div className="mt-5 border-t border-[#eee5ea] pt-4">
                 <h4 className="mb-3 text-sm font-bold text-[#50343f]">
-                  Примеры рецептов
+                  {t("Примеры рецептов", "Retsept namunalari")}
                 </h4>
 
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {recipes.map((recipe) => (
                     <button
-                      key={recipe.name}
+                      key={language === "uz" ? translateRecipeName(recipe.name) : recipe.name}
                       onClick={() => applyRecipe(recipe)}
                       className="min-h-11 rounded-xl border border-[#e8dce1] bg-[#fffafb] px-3 py-2 text-sm font-semibold text-[#781f3b] transition hover:bg-[#f5e8ed]"
                     >
-                      {recipe.name}
+                      {language === "uz" ? translateRecipeName(recipe.name) : recipe.name}
                     </button>
                   ))}
                 </div>
               </div>
 
               <p className="mt-3 text-xs leading-5 text-[#81717a]">
-                Интернет-рецепты могут иметь другие единицы измерения и выход.
-                Проверяйте состав и количества перед расчётом. Примеры
-                рецептов ориентировочные.
+                {t("Интернет-рецепты могут иметь другие единицы измерения и выход. Проверяйте состав и количества перед расчётом. Примеры рецептов ориентировочные.", "Internet retseptlarida o‘lchov birliklari va chiqish miqdori boshqacha bo‘lishi mumkin. Hisoblashdan oldin tarkib va miqdorlarni tekshiring. Retsept namunalari taxminiy.")}
               </p>
             </section>
 
@@ -1786,9 +1831,9 @@ console.log("Изделия:", data);
                 </div>
 
                 <div>
-                  <h3 className="font-bold">Состав рецепта</h3>
+                  <h3 className="font-bold">{t("Состав рецепта", "Retsept tarkibi")}</h3>
                   <p className="mt-1 text-xs text-[#81717a]">
-                    Цена за килограмм, литр или штуку
+                    {t("Цена за килограмм, литр или штуку", "Kilogramm, litr yoki dona narxi")}
                   </p>
                 </div>
               </div>
@@ -1810,7 +1855,7 @@ console.log("Изделия:", data);
                     >
                       <div className="mb-3 flex items-center justify-between gap-2">
                         <span className="text-xs font-bold uppercase tracking-wider text-[#986b7b]">
-                          Ингредиент {index + 1}
+                          {t("Ингредиент", "Masalliq")} {index + 1}
                         </span>
 
                         <button
@@ -1820,27 +1865,27 @@ console.log("Изделия:", data);
                             )
                           }
                           className="flex h-9 w-9 items-center justify-center rounded-lg text-[#a56b7a] hover:bg-[#f8e9ee]"
-                          aria-label="Удалить ингредиент"
+                          aria-label={t("Удалить ингредиент", "Masalliqni o‘chirish")}
                         >
                           <Trash2 size={17} />
                         </button>
                       </div>
 
                       <label className="mb-3 block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                        Название
+                        {t("Название", "Nomi")}
                         <input
                           className={`${field} mt-1.5`}
-                          placeholder="Например, мука"
-                          value={item.name}
+                          placeholder={t("Например, мука", "Masalan, un")}
+                          value={displayIngredientName(item.name, language)}
                           onChange={(e) =>
-                            updateIngredient(item.id, "name", e.target.value)
+                            updateIngredient(item.id, "name", storeIngredientName(e.target.value, language))
                           }
                         />
                       </label>
 
                       <div className="grid min-w-0 grid-cols-2 gap-3">
                         <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                          Количество
+                          {t("Количество", "Miqdori")}
                           <input
                             className={`${field} mt-1.5`}
                             type="number"
@@ -1862,23 +1907,23 @@ console.log("Изделия:", data);
   Number(targetYield) > 0 &&
   Number(yieldCount) > 0 && (
     <p className="mt-2 text-xs font-semibold text-[#781f3b]">
-      Для {targetYield} изделий:{" "}
+      {t("Для", "Quyidagi")} {targetYield} {t("изделий:", "ta mahsulot uchun:")}{" "}
       {(
         (Number(item.amount) || 0) * yieldMultiplier
       ).toLocaleString("ru-RU", {
         maximumFractionDigits: 2,
       })}{" "}
       {item.unit === "pcs"
-        ? "шт."
+        ? t("шт.", "dona")
         : item.unit === "ml"
-          ? "мл"
+          ? t("мл", "ml")
           : item.unit === "kg"
-            ? "кг"
-            : "г"}
+            ? t("кг", "kg")
+            : t("г", "g")}
     </p>
   )}
                         <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                          Единица
+                          {t("Единица", "O‘lchov birligi")}
                           <select
                             className={`${field} mt-1.5`}
                             value={item.unit}
@@ -1890,20 +1935,20 @@ console.log("Изделия:", data);
                               )
                             }
                           >
-                            <option value="g">Граммы (г)</option>
-                            <option value="kg">Килограммы (кг)</option>
-                            <option value="ml">Миллилитры (мл)</option>
-                            <option value="pcs">Штуки (шт.)</option>
+                            <option value="g">{t("Граммы (г)", "Gramm (g)")}</option>
+                            <option value="kg">{t("Килограммы (кг)", "Kilogramm (kg)")}</option>
+                            <option value="ml">{t("Миллилитры (мл)", "Millilitr (ml)")}</option>
+                            <option value="pcs">{t("Штуки (шт.)", "Dona")}</option>
                           </select>
                         </label>
                       </div>
 
                       <label className="mt-3 block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                         {item.unit === "pcs"
-                          ? "Цена за 1 штуку (сум)"
+                          ? t("Цена за 1 штуку (сум)", "1 dona narxi (so‘m)")
                           : item.unit === "ml"
-                            ? "Цена за 1 литр (сум)"
-                            : "Цена за 1 кг (сум)"}
+                            ? t("Цена за 1 литр (сум)", "1 litr narxi (so‘m)")
+                            : t("Цена за 1 кг (сум)", "1 kg narxi (so‘m)")}
                         <input
                           className={`${field} mt-1.5`}
                           type="number"
@@ -1920,10 +1965,10 @@ console.log("Изделия:", data);
 
                       <div className="mt-3 flex items-center justify-between gap-2 rounded-xl bg-[#f1e5ea] px-3 py-2.5">
                         <span className="text-xs text-[#765666]">
-                          Стоимость ингредиента
+                          {t("Стоимость ингредиента", "Masalliq narxi")}
                         </span>
                         <span className="text-sm font-bold text-[#58152b]">
-                          {money(ingredientCost)}
+                          {displayMoney(ingredientCost)}
                         </span>
                       </div>
                     </div>
@@ -1936,12 +1981,12 @@ console.log("Изделия:", data);
                 onClick={addIngredient}
               >
                 <Plus size={17} />
-                Добавить ингредиент
+                {t("Добавить ингредиент", "Masalliq qo‘shish")}
               </button>
 
               <div className="mt-5 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
   <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-    Исходное количество изделий в рецепте
+    {t("Исходное количество изделий в рецепте", "Retseptdagi mahsulotlar soni")}
     <input
       className={`${field} mt-1.5`}
       type="number"
@@ -1955,10 +2000,10 @@ console.log("Изделия:", data);
 
  <div className="rounded-xl bg-[#f1e5ea] p-4">
     <span className="text-xs font-medium text-[#765666]">
-      Общая стоимость ингредиентов
+      {t("Общая стоимость ингредиентов", "Masalliqlarning umumiy narxi")}
     </span>
     <p className="mt-2 text-xl font-bold text-[#58152b]">
-      {money(ingredientTotal)}
+      {displayMoney(ingredientTotal)}
     </p>
   </div>
 </div>
@@ -1971,15 +2016,15 @@ console.log("Изделия:", data);
                 </div>
 
                 <div>
-                  <h3 className="font-bold">Электричество и газ</h3>
+                  <h3 className="font-bold">{t("Электричество и газ", "Elektr va gaz")}</h3>
                   <p className="mt-1 text-xs text-[#81717a]">
-                    Затраты на всю партию
+                    {t("Затраты на всю партию", "Butun partiya uchun xarajat")}
                   </p>
                 </div>
               </div>
 
               <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                Электричество и газ на одну партию (сум)
+                {t("Bir partiya uchun elektr va gaz (so‘m)", "Bir partiya uchun elektr va gaz (so‘m)")}
                 <input
                   className={`${field} mt-1.5`}
                   type="number"
@@ -1993,16 +2038,15 @@ console.log("Изделия:", data);
               </label>
 
               <p className="mt-2 text-xs leading-5 text-[#81717a]">
-                Введите стоимость энергии для одной партии. Тарифы не
-                загружаются автоматически.
+                {t("Введите стоимость энергии для одной партии. Тарифы не загружаются автоматически.", "Bir partiya uchun energiya xarajatini kiriting. Tariflar avtomatik yuklanmaydi.")}
               </p>
 
               <div className="mt-4 rounded-xl bg-[#f1e5ea] p-4">
                 <span className="text-xs text-[#765666]">
-                  Ингредиенты плюс коммунальные затраты
+                  {t("Ингредиенты плюс коммунальные затраты", "Masalliqlar va kommunal xarajatlar")}
                 </span>
                 <p className="mt-2 text-xl font-bold text-[#58152b]">
-                  {money(totalBatchCost)}
+                  {displayMoney(totalBatchCost)}
                 </p>
               </div>
             </section>
@@ -2014,22 +2058,22 @@ console.log("Изделия:", data);
                 </div>
 
                 <div>
-                  <h3 className="font-bold">Стоимость одного изделия</h3>
+                  <h3 className="font-bold">{t("Стоимость одного изделия", "Bitta mahsulot tannarxi")}</h3>
                   <p className="mt-1 text-xs text-[#81717a]">
-                    Можно указать себестоимость вручную
+                    {t("Можно указать себестоимость вручную", "Tannarxni qo‘lda kiritish mumkin")}
                   </p>
                 </div>
               </div>
 
               <label className="mb-4 block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                Себестоимость одного изделия вручную (сум)
+                {t("Себестоимость одного изделия вручную (сум)", "Bitta mahsulot tannarxini qo‘lda kiriting (so‘m)")}
                 <input
                   className={`${field} mt-1.5`}
                   type="number"
                   min="0"
                   step="any"
                   inputMode="decimal"
-                  placeholder="Оставьте пустым для расчёта по рецепту"
+                  placeholder={t("Оставьте пустым для расчёта по рецепту", "Retsept bo‘yicha hisoblash uchun bo‘sh qoldiring")}
                   value={manualCost}
                   onChange={(e) => setManualCost(e.target.value)}
                 />
@@ -2037,38 +2081,38 @@ console.log("Изделия:", data);
 
               <div className="rounded-2xl bg-[#58152b] p-5 text-white">
                 <p className="text-sm text-white/70">
-                  Себестоимость одного изделия
+                  {t("Себестоимость одного изделия", "Bitta mahsulot tannarxi")}
                 </p>
                 <p className="mt-2 break-words text-3xl font-bold sm:text-4xl">
-                  {money(calculatedCost)}
+                  {displayMoney(calculatedCost)}
                 </p>
                 <p className="mt-2 text-xs leading-5 text-white/70">
                   {manualCost.trim() !== ""
-                    ? "Используется указанная вами себестоимость."
-                    : "Ингредиенты и коммунальные затраты разделены на количество изделий."}
+                    ? t("Используется указанная вами себестоимость.", "Siz kiritgan tannarx ishlatiladi.")
+                    : t("Ингредиенты и коммунальные затраты разделены на количество изделий.", "Masalliqlar va kommunal xarajatlar mahsulotlar soniga bo‘lindi.")}
                 </p>
               </div>
 
               <div className="mt-5 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                  Название изделия
+                  {t("Название изделия", "Mahsulot nomi")}
                   <input
                     className={`${field} mt-1.5`}
-                    placeholder="Например, Наполеон"
+                    placeholder={t("Например, Наполеон", "Masalan, Napoleon")}
                     value={productName}
                     onChange={(e) => handleProductNameChange(e.target.value)}
                   />
                 </label>
 
                 <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                  Цена продажи (сум)
+                  {t("Цена продажи (сум)", "Sotuv narxi (so‘m)")}
                   <input
                     className={`${field} mt-1.5`}
                     type="number"
                     min="0"
                     step="any"
                     inputMode="decimal"
-                    placeholder="Например, 45000"
+                    placeholder={t("Например, 45000", "Masalan, 45000")}
                     value={sellingPrice}
                     onChange={(e) => setSellingPrice(e.target.value)}
                   />
@@ -2080,24 +2124,24 @@ console.log("Изделия:", data);
                 onClick={saveProduct}
               >
                 <Plus size={17} />
-                Добавить изделие в список
+                {t("Добавить изделие в список", "Mahsulotni ro‘yxatga qo‘shish")}
               </button>
             </section>
 
             <section className="rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
               <h3 className="mb-4 flex items-center gap-2 font-bold">
                 <ShoppingBag size={19} className="text-[#781f3b]" />
-                Список изделий
+                {t("Список изделий", "Mahsulotlar ro‘yxati")}
               </h3>
 
               {products.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-[#dfcbd3] px-4 py-8 text-center">
                   <Package size={27} className="mx-auto text-[#b8a1ab]" />
                   <p className="mt-3 text-sm font-semibold text-[#6f5b6a]">
-                    Пока нет добавленных изделий
+                    {t("Пока нет добавленных изделий", "Hozircha mahsulotlar qo‘shilmagan")}
                   </p>
                   <p className="mt-1 text-xs text-[#9b8490]">
-                    Заполните название и цену выше
+                    {t("Заполните название и цену выше", "Yuqorida nomi va narxini kiriting")}
                   </p>
                 </div>
               ) : (
@@ -2110,17 +2154,17 @@ console.log("Изделия:", data);
                       <div className="min-w-0">
                         <p className="break-words font-bold">{product.name}</p>
                         <p className="mt-1 text-xs text-[#81717a]">
-                          Себестоимость: {money(product.cost)}
+                          {t("Себестоимость:", "Tannarx:")} {displayMoney(product.cost)}
                         </p>
                         <p className="mt-1 text-xs text-[#81717a]">
-                          Цена продажи: {money(product.price)}
+                          {t("Цена продажи:", "Sotuv narxi:")} {displayMoney(product.price)}
                         </p>
                       </div>
 
                       <button
   onClick={async () => {
     if (!user) {
-      setNotice("Необходимо войти в аккаунт.");
+      setNotice(t("Необходимо войти в аккаунт.", "Hisobga kirish kerak."));
       return;
     }
 
@@ -2132,7 +2176,7 @@ console.log("Изделия:", data);
 
     if (error) {
       console.error("Ошибка удаления изделия:", error);
-      setNotice(`Ошибка удаления: ${error.message}`);
+      setNotice(t(`Ошибка удаления: ${error.message}`, `O‘chirishda xatolik: ${error.message}`));
       return;
     }
 
@@ -2140,10 +2184,10 @@ console.log("Изделия:", data);
       current.filter((p) => p.id !== product.id)
     );
 
-    setNotice("Изделие удалено из базы данных.");
+    setNotice(t("Изделие удалено из базы данных.", "Mahsulot bazadan o‘chirildi."));
   }}
   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#a56b7a] hover:bg-[#f8e9ee]"
-  aria-label="Удалить изделие"
+  aria-label={t("Удалить изделие", "Mahsulotni o‘chirish")}
 >
   <Trash2 size={17} />
 </button>
@@ -2158,20 +2202,20 @@ console.log("Изделия:", data);
         {tab === "finance" && (
           <>
             <SectionTitle
-              eyebrow="Раздел 02"
-              title="Продажи и прибыль"
-              description="Добавляйте продажи и расходы, выбирайте период и смотрите финансовый результат."
+              eyebrow={t("Раздел 02", "02-bo‘lim")}
+              title={t("Продажи и прибыль", "Savdo va foyda")}
+              description={t("Добавляйте продажи и расходы, выбирайте период и смотрите финансовый результат.", "Savdo va xarajatlarni qo‘shing, davrni tanlang va moliyaviy natijani ko‘ring.")}
             />
 
             <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
               <h3 className="mb-4 flex items-center gap-2 font-bold">
                 <ShoppingBag size={19} className="text-[#781f3b]" />
-                Новая продажа
+                {t("Новая продажа", "Yangi savdo")}
               </h3>
 
               <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
                 <label className="block min-w-0 w-full text-xs font-semibold text-[#6f5b4e]">
-                  Дата продажи
+                  {t("Дата продажи", "Savdo sanasi")}
                   <input
                     className={`${field} mt-1.5 block w-full overflow-hidden`}
                     type="date"
@@ -2181,7 +2225,7 @@ console.log("Изделия:", data);
                 </label>
 
                 <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                  Изделие
+                  {t("Изделие", "Mahsulot")}
                   <select
                     className={`${field} mt-1.5`}
                     value={saleProductId}
@@ -2193,7 +2237,7 @@ console.log("Изделия:", data);
                       if (selected) setSalePrice(String(selected.price));
                     }}
                   >
-                    <option value="">Выберите изделие</option>
+                    <option value="">{t("Выберите изделие", "Mahsulotni tanlang")}</option>
                     {products.map((product) => (
                       <option key={product.id} value={product.id}>
                         {product.name}
@@ -2203,7 +2247,7 @@ console.log("Изделия:", data);
                 </label>
 
                 <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                  Количество
+                  {t("Количество", "Miqdori")}
                   <input
                     className={`${field} mt-1.5`}
                     type="number"
@@ -2216,7 +2260,7 @@ console.log("Изделия:", data);
                 </label>
 
                 <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                  Цена за единицу (сум)
+                  {t("Цена за единицу (сум)", "Bir dona narxi (so‘m)")}
                   <input
                     className={`${field} mt-1.5`}
                     type="number"
@@ -2235,12 +2279,12 @@ console.log("Изделия:", data);
                 disabled={products.length === 0}
               >
                 <Plus size={17} />
-                Добавить продажу
+                {t("Добавить продажу", "Savdo qo‘shish")}
               </button>
 
               {products.length === 0 && (
                 <p className="mt-3 text-xs leading-5 text-[#9b7988]">
-                  Сначала добавьте изделия в разделе «Себестоимость».
+                  {t("Сначала добавьте изделия в разделе «Себестоимость».", "Avval «Tannarx» bo‘limida mahsulot qo‘shing.")}
                 </p>
               )}
             </section>
@@ -2248,12 +2292,12 @@ console.log("Изделия:", data);
             <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
               <h3 className="mb-4 flex items-center gap-2 font-bold">
                 <ReceiptText size={19} className="text-[#781f3b]" />
-                Дополнительный расход
+                {t("Дополнительный расход", "Qo‘shimcha xarajat")}
               </h3>
 
               <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
                 <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                  Дата расхода
+                  {t("Дата расхода", "Xarajat sanasi")}
                   <input
                     className={`${field} mt-1.5`}
                     type="date"
@@ -2263,17 +2307,17 @@ console.log("Изделия:", data);
                 </label>
 
                 <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                  Название расхода
+                  {t("Название расхода", "Xarajat nomi")}
                   <input
                     className={`${field} mt-1.5`}
-                    placeholder="Например, доставка"
+                    placeholder={t("Например, доставка", "Masalan, yetkazib berish")}
                     value={expenseName}
                     onChange={(e) => setExpenseName(e.target.value)}
                   />
                 </label>
 
                 <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e] sm:col-span-2">
-                  Сумма расхода (сум)
+                  {t("Сумма расхода (сум)", "Xarajat summasi (so‘m)")}
                   <input
                     className={`${field} mt-1.5`}
                     type="number"
@@ -2292,19 +2336,19 @@ console.log("Изделия:", data);
                 onClick={addExpense}
               >
                 <Plus size={17} />
-                Добавить расход
+                {t("Добавить расход", "Xarajat qo‘shish")}
               </button>
             </section>
 
             <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
-              <h3 className="mb-4 font-bold">Период отчёта</h3>
+              <h3 className="mb-4 font-bold">{t("Период отчёта", "Hisobot davri")}</h3>
 
               <div className="grid grid-cols-3 gap-2">
                 {(
                   [
-                    ["today", "Сегодня"],
-                    ["month", "Месяц"],
-                    ["custom", "Период"],
+                    ["today", language === "uz" ? "Bugun" : "Сегодня"],
+                    ["month", language === "uz" ? "Oy" : "Месяц"],
+                    ["custom", language === "uz" ? "Davr" : "Период"],
                   ] as const
                 ).map(([value, label]) => (
                   <button
@@ -2324,7 +2368,7 @@ console.log("Изделия:", data);
               {period === "custom" && (
                 <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
                   <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                    Начало периода
+                    {t("Начало периода", "Davr boshlanishi")}
                     <input
                       className={`${field} mt-1.5`}
                       type="date"
@@ -2334,7 +2378,7 @@ console.log("Изделия:", data);
                   </label>
 
                   <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                    Конец периода
+                    {t("Конец периода", "Davr tugashi")}
                     <input
                       className={`${field} mt-1.5`}
                       type="date"
@@ -2349,62 +2393,61 @@ console.log("Изделия:", data);
             <section className="mb-5">
               <div className="mb-4">
                 <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#986b7b]">
-                  Финансовый результат
+                  {t("Финансовый результат", "Moliyaviy natija")}
                 </p>
                 <h3 className="mt-1 text-lg font-bold">{reportPeriod}</h3>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <StatCard label="Выручка" value={money(revenue)} icon={Wallet} />
+                <StatCard label={t("Выручка", "Tushum")} value={displayMoney(revenue)} icon={Wallet} />
 
                 <StatCard
-                  label="Себестоимость продаж"
-                  value={money(goodsCost)}
+                  label={t("Себестоимость продаж", "Sotilgan mahsulotlar tannarxi")}
+                  value={displayMoney(goodsCost)}
                   icon={Package}
                 />
 
                 <StatCard
-                  label="Дополнительные расходы"
-                  value={money(expenseTotal)}
+                  label={t("Дополнительные расходы", "Qo‘shimcha xarajatlar")}
+                  value={displayMoney(expenseTotal)}
                   icon={ReceiptText}
                 />
 
                 <div className="min-w-0 rounded-2xl bg-[#e8f1e8] p-4 text-[#365b40] sm:p-5">
                   <div className="mb-4 flex items-center justify-between gap-2">
                     <span className="text-xs font-medium leading-5 sm:text-sm">
-                      Чистая прибыль
+                      {t("Чистая прибыль", "Sof foyda")}
                     </span>
                     <TrendingUp size={19} />
                   </div>
 
                   <div className="break-words text-xl font-bold sm:text-2xl">
-                    {money(profit)}
+                    {displayMoney(profit)}
                   </div>
                 </div>
               </div>
 
               <div className="mt-3 rounded-2xl bg-[#58152b] p-5 text-white">
                 <p className="text-sm text-white/70">
-                  Итоговая прибыль за период
+                  {t("Итоговая прибыль за период", "Davr uchun yakuniy foyda")}
                 </p>
 
                 <p className="mt-2 break-words text-3xl font-bold sm:text-4xl">
-                  {money(profit)}
+                  {displayMoney(profit)}
                 </p>
 
                 <p className="mt-3 text-xs leading-5 text-white/70">
-                  Выручка − себестоимость проданных изделий − дополнительные
-                  расходы.
+                  {t("Выручка − себестоимость проданных изделий − дополнительные расходы.", "Tushum − sotilgan mahsulotlar tannarxi − qo‘shimcha xarajatlar.")}
                 </p>
               </div>
             </section>
 
             <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
-              <h3 className="mb-4 font-bold">Продажи за выбранный период</h3>
+              <h3 className="mb-4 font-bold">{t("Продажи за выбранный период", "Tanlangan davrdagi savdolar")}</h3>
 
               {filteredSales.length === 0 ? (
                 <p className="rounded-xl bg-[#fffafb] px-4 py-6 text-center text-sm text-[#81717a]">
-                  За этот период продаж пока нет.
+                  {t("За этот период продаж пока нет.", "Bu davrda hozircha savdo yo‘q.")}
                 </p>
               ) : (
                 <div className="space-y-3">
@@ -2419,13 +2462,13 @@ console.log("Изделия:", data);
                         </p>
 
                         <p className="mt-1 text-xs text-[#81717a]">
-                          {sale.date} · {sale.quantity} шт. × {money(sale.price)}
+                          {sale.date} · {sale.quantity} {t("шт.", "dona")} × {displayMoney(sale.price)}
                         </p>
                       </div>
 
                       <div className="shrink-0 text-right">
                         <p className="text-sm font-bold">
-                          {money(sale.price * sale.quantity)}
+                          {displayMoney(sale.price * sale.quantity)}
                         </p>
 
                         <button
@@ -2436,7 +2479,7 @@ console.log("Изделия:", data);
                             )
                           }
                         >
-                          Удалить
+                          {t("Удалить", "O‘chirish")}
                         </button>
                       </div>
                     </div>
@@ -2447,12 +2490,12 @@ console.log("Изделия:", data);
 
             <section className="mb-5 rounded-2xl border border-[#e8dce1] bg-white p-4 shadow-sm sm:p-6">
               <h3 className="mb-4 font-bold">
-                Расходы за выбранный период
+                {t("Расходы за выбранный период", "Tanlangan davrdagi xarajatlar")}
               </h3>
 
               {filteredExpenses.length === 0 ? (
                 <p className="rounded-xl bg-[#fffafb] px-4 py-6 text-center text-sm text-[#81717a]">
-                  За этот период дополнительных расходов пока нет.
+                  {t("За этот период дополнительных расходов пока нет.", "Bu davrda hozircha qo‘shimcha xarajatlar yo‘q.")}
                 </p>
               ) : (
                 <div className="space-y-3">
@@ -2473,14 +2516,14 @@ console.log("Изделия:", data);
 
                       <div className="shrink-0 text-right">
                         <p className="text-sm font-bold">
-                          {money(expense.amount)}
+                          {displayMoney(expense.amount)}
                         </p>
 
                         <button
   className="mt-2 text-xs text-[#a56b7a] underline"
   onClick={async () => {
     if (!user) {
-      setNotice("Необходимо войти в аккаунт.");
+      setNotice(t("Необходимо войти в аккаунт.", "Hisobga kirish kerak."));
       return;
     }
 
@@ -2492,7 +2535,7 @@ console.log("Изделия:", data);
 
     if (error) {
       console.error("Ошибка удаления расхода:", error);
-      setNotice(`Ошибка удаления: ${error.message}`);
+      setNotice(t(`Ошибка удаления: ${error.message}`, `O‘chirishda xatolik: ${error.message}`));
       return;
     }
 
@@ -2500,10 +2543,10 @@ console.log("Изделия:", data);
       current.filter((item) => item.id !== expense.id)
     );
 
-    setNotice("Расход удалён из базы данных.");
+    setNotice(t("Расход удалён из базы данных.", "Xarajat bazadan o‘chirildi."));
   }}
 >
-  Удалить
+  {t("Удалить", "O‘chirish")}
 </button>
                       </div>
                     </div>
@@ -2517,7 +2560,7 @@ console.log("Изделия:", data);
               onClick={exportPdf}
             >
               <FileDown size={18} />
-              Сохранить отчёт в PDF
+              {t("Сохранить отчёт в PDF", "Hisobotni PDF sifatida saqlash")}
             </button>
           </>
         )}
@@ -2525,51 +2568,51 @@ console.log("Изделия:", data);
 
       <div className="print-only">
         <h1>Modigul Accounting</h1>
-        <h2>Финансовый отчёт кондитерской</h2>
-        <p>Период: {reportPeriod}</p>
+        <h2>{t("Финансовый отчёт кондитерской", "Qandolatchilik moliyaviy hisoboti")}</h2>
+        <p>{t("Период:", "Davr:")} {reportPeriod}</p>
         <hr />
 
-        <h3>Итоги</h3>
+        <h3>{t("Итоги", "Yakunlar")}</h3>
 
         <table>
           <tbody>
             <tr>
-              <td>Выручка</td>
-              <td>{money(revenue)}</td>
+              <td>{t("Выручка", "Tushum")}</td>
+              <td>{displayMoney(revenue)}</td>
             </tr>
 
             <tr>
-              <td>Себестоимость проданных изделий</td>
-              <td>{money(goodsCost)}</td>
+              <td>{t("Себестоимость проданных изделий", "Sotilgan mahsulotlar tannarxi")}</td>
+              <td>{displayMoney(goodsCost)}</td>
             </tr>
 
             <tr>
-              <td>Дополнительные расходы</td>
-              <td>{money(expenseTotal)}</td>
+              <td>{t("Дополнительные расходы", "Qo‘shimcha xarajatlar")}</td>
+              <td>{displayMoney(expenseTotal)}</td>
             </tr>
 
             <tr>
               <td>
-                <strong>Чистая прибыль</strong>
+                <strong>{t("Чистая прибыль", "Sof foyda")}</strong>
               </td>
               <td>
-                <strong>{money(profit)}</strong>
+                <strong>{displayMoney(profit)}</strong>
               </td>
             </tr>
           </tbody>
         </table>
 
-        <h3>Продажи</h3>
+        <h3>{t("Продажи", "Savdolar")}</h3>
 
         <table>
           <thead>
             <tr>
-              <th>Дата</th>
-              <th>Изделие</th>
-              <th>Кол-во</th>
-              <th>Цена</th>
-              <th>Выручка</th>
-              <th>Себестоимость</th>
+              <th>{t("Дата", "Sana")}</th>
+              <th>{t("Изделие", "Mahsulot")}</th>
+              <th>{t("Кол-во", "Miqdor")}</th>
+              <th>{t("Цена", "Narx")}</th>
+              <th>{t("Выручка", "Tushum")}</th>
+              <th>{t("Себестоимость", "Tannarx")}</th>
             </tr>
           </thead>
 
@@ -2579,28 +2622,28 @@ console.log("Изделия:", data);
                 <td>{sale.date}</td>
                 <td>{sale.productName}</td>
                 <td>{sale.quantity}</td>
-                <td>{money(sale.price)}</td>
-                <td>{money(sale.price * sale.quantity)}</td>
-                <td>{money(sale.cost * sale.quantity)}</td>
+                <td>{displayMoney(sale.price)}</td>
+                <td>{displayMoney(sale.price * sale.quantity)}</td>
+                <td>{displayMoney(sale.cost * sale.quantity)}</td>
               </tr>
             ))}
 
             {filteredSales.length === 0 && (
               <tr>
-                <td colSpan={6}>За выбранный период продаж нет.</td>
+                <td colSpan={6}>{t("За выбранный период продаж нет.", "Tanlangan davrda savdolar yo‘q.")}</td>
               </tr>
             )}
           </tbody>
         </table>
 
-        <h3>Дополнительные расходы</h3>
+        <h3>{t("Дополнительные расходы", "Qo‘shimcha xarajatlar")}</h3>
 
         <table>
           <thead>
             <tr>
-              <th>Дата</th>
-              <th>Расход</th>
-              <th>Сумма</th>
+              <th>{t("Дата", "Sana")}</th>
+              <th>{t("Расход", "Xarajat")}</th>
+              <th>{t("Сумма", "Summa")}</th>
             </tr>
           </thead>
 
@@ -2609,20 +2652,20 @@ console.log("Изделия:", data);
               <tr key={expense.id}>
                 <td>{expense.date}</td>
                 <td>{expense.name}</td>
-                <td>{money(expense.amount)}</td>
+                <td>{displayMoney(expense.amount)}</td>
               </tr>
             ))}
 
             {filteredExpenses.length === 0 && (
               <tr>
-                <td colSpan={3}>За выбранный период расходов нет.</td>
+                <td colSpan={3}>{t("За выбранный период расходов нет.", "Tanlangan davrda xarajatlar yo‘q.")}</td>
               </tr>
             )}
           </tbody>
         </table>
 
         <p className="print-footer">
-          Отчёт сформирован в Modigul Accounting. Все суммы указаны в сумах.
+          {t("Отчёт сформирован в Modigul Accounting. Все суммы указаны в сумах.", "Hisobot Modigul Accounting tizimida tuzildi. Barcha summalar so‘mda ko‘rsatilgan.")}
         </p>
       </div>
     </main>
