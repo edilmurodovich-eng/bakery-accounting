@@ -99,6 +99,59 @@ type ApiPriceResponse = {
   note: string;
   prices: ApiPrice[];
 };
+const ingredientPriceCatalog: Record<string, number> = {
+  "мука": 10000,
+  "пшеничная мука": 10000,
+  "мука пшеничная": 10000,
+
+  "сахар": 15000,
+
+  "яйцо": 2000,
+  "яйца": 2000,
+
+  "сливочное масло": 90000,
+  "масло сливочное": 90000,
+
+  "молоко": 12000,
+
+  "мёд": 60000,
+  "мед": 60000,
+
+  "сметана": 30000,
+
+  "сливки": 65000,
+
+  "крахмал": 25000,
+
+  "дрожжи": 50000,
+
+  "соль": 5000,
+
+  "мясо": 90000,
+
+  "лук": 5000,
+
+  "растительное масло": 25000,
+  "масло растительное": 25000,
+};
+
+const normalizeIngredientName = (value: string) =>
+  value
+    .toLocaleLowerCase("ru-RU")
+    .replace(/ё/g, "е")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+
+const findIngredientPrice = (name: string) => {
+  const normalized = normalizeIngredientName(name);
+
+  const entry = Object.entries(ingredientPriceCatalog).find(
+    ([key]) => normalizeIngredientName(key) === normalized
+  );
+
+  return entry?.[1] ?? "";
+};
 const money = (value: number) =>
   new Intl.NumberFormat("ru-RU", {
     maximumFractionDigits: 0,
@@ -820,13 +873,13 @@ export default function Home() {
         return null;
       }
 
-      return {
-        id: Date.now() + index,
-        name,
-        amount: String(amount),
-        unit,
-        price: "",
-      };
+     return {
+  id: Date.now() + index,
+  name,
+  amount: String(amount),
+  unit,
+  price: String(findIngredientPrice(name)),
+};
     })
     .filter((item): item is NonNullable<typeof item> => item !== null);
 
