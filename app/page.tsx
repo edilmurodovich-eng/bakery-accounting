@@ -1167,15 +1167,22 @@ export default function Home() {
                 <Wheat size={25} />
               </div>
 
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.23em] text-[#f0d5df]">
-                  Учёт кондитерской
-                </p>
-                <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-                  Modigul Accounting
-                </h1>
-              </div>
-            </div>
+              <div className="flex min-w-0 items-center gap-4">
+  <img
+    src="/modigul-logo.png"
+    alt="Modigul Accounting"
+    className="h-20 w-20 shrink-0 rounded-full object-cover sm:h-24 sm:w-24"
+  />
+
+  <div className="min-w-0">
+    <p className="text-[10px] font-bold uppercase tracking-[0.23em] text-[#f0d5df]">
+      Учёт кондитерской
+    </p>
+    <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+      Modigul Accounting
+    </h1>
+  </div>
+</div>
 
             <p className="relative mt-5 max-w-lg text-sm leading-6 text-white/75 sm:text-base">
               Себестоимость, продажи и прибыль — в одном удобном месте.
