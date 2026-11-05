@@ -2066,17 +2066,35 @@ console.log("Изделия:", data);
                       </div>
 
                       <button
-                        onClick={() => {
-                          setProducts((current) =>
-                            current.filter((p) => p.id !== product.id)
-                          );
-                          setNotice("Изделие удалено из списка.");
-                        }}
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#a56b7a] hover:bg-[#f8e9ee]"
-                        aria-label="Удалить изделие"
-                      >
-                        <Trash2 size={17} />
-                      </button>
+  onClick={async () => {
+    if (!user) {
+      setNotice("Необходимо войти в аккаунт.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("bakery_products")
+      .delete()
+      .eq("id", product.id)
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.error("Ошибка удаления изделия:", error);
+      setNotice(`Ошибка удаления: ${error.message}`);
+      return;
+    }
+
+    setProducts((current) =>
+      current.filter((p) => p.id !== product.id)
+    );
+
+    setNotice("Изделие удалено из базы данных.");
+  }}
+  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#a56b7a] hover:bg-[#f8e9ee]"
+  aria-label="Удалить изделие"
+>
+  <Trash2 size={17} />
+</button>
                     </div>
                   ))}
                 </div>
