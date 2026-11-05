@@ -1124,37 +1124,58 @@ export default function Home() {
     setProductName(value);
   }
 
-  function saveProduct() {
-    if (!productName.trim()) {
-      setNotice("Укажите название изделия.");
-      return;
-    }
+ async function saveProduct() {
+  if (!productName.trim()) {
+    setNotice("Укажите название изделия.");
+    return;
+  }
 
-    if (
-      sellingPrice.trim() === "" ||
-      !Number.isFinite(Number(sellingPrice)) ||
-      Number(sellingPrice) < 0
-    ) {
-      setNotice("Укажите корректную цену продажи.");
-      return;
-    }
+  if (
+    sellingPrice.trim() === "" ||
+    !Number.isFinite(Number(sellingPrice)) ||
+    Number(sellingPrice) < 0
+  ) {
+    setNotice("Укажите корректную цену продажи.");
+    return;
+  }
 
-    const product: Product = {
-      id: Date.now(),
+  if (!user) {
+    setNotice("Необходимо войти в аккаунт.");
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("bakery_products")
+    .insert({
+      user_id: user.id,
       name: productName.trim(),
       cost: Math.max(0, calculatedCost),
       price: Number(sellingPrice),
-    };
+    })
+    .select("id, name, cost, price")
+    .single();
 
-    setProducts((current) => [...current, product]);
-    setSaleProductId(String(product.id));
-    setSalePrice(String(product.price));
-    setProductName("");
-    setSellingPrice("");
-    setManualCost("");
-    setNotice("Изделие добавлено в список.");
+  if (error) {
+    console.error("Ошибка сохранения изделия:", error);
+    setNotice("Не удалось сохранить изделие. Попробуйте ещё раз.");
+    return;
   }
 
+  const product: Product = {
+    id: Number(data.id),
+    name: data.name,
+    cost: Number(data.cost),
+    price: Number(data.price),
+  };
+
+  setProducts((current) => [...current, product]);
+  setSaleProductId(String(product.id));
+  setSalePrice(String(product.price));
+  setProductName("");
+  setSellingPrice("");
+  setManualCost("");
+  setNotice("Изделие сохранено в базе данных.");
+}
   function addSale() {
     const product = products.find(
       (item) => item.id === Number(saleProductId)
