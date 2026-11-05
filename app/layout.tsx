@@ -8,8 +8,8 @@ export const metadata: Metadata = {
   description: "Расчёт себестоимости, продаж и прибыли кондитерской",
   applicationName: "Modigul Accounting",
   icons: {
-    icon: "/modigul-logo.png",
-    apple: "/modigul-logo.png",
+    icon: "/modigul-icon.png",
+  apple: "/modigul-icon.png",
   },
 };
 
