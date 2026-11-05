@@ -1348,10 +1348,10 @@ console.log("Изделия:", data);
     .single();
 
   if (error) {
-    console.error("Ошибка сохранения расхода:", error);
-    setNotice("Не удалось сохранить расход. Попробуйте ещё раз.");
-    return;
-  }
+  console.error("Ошибка сохранения расхода:", error);
+  setNotice(`Ошибка Supabase: ${error.message}`);
+  return;
+}
 
   setExpenses((current) => [
     ...current,
