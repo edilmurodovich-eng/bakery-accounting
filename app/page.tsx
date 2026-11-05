@@ -1167,6 +1167,63 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#f5eef1] text-[#35252c]">
+            {showSplash && (
+        <div
+          className="modigul-splash fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#450914]"
+          role="status"
+          aria-label="Modigul Accounting загружается"
+        >
+          <style>{`
+            @keyframes modigulLogoReveal {
+              0% {
+                opacity: 0;
+                transform: scale(0.82);
+                filter: blur(12px);
+              }
+              65% {
+                opacity: 1;
+                transform: scale(1.04);
+                filter: blur(0);
+              }
+              100% {
+                opacity: 1;
+                transform: scale(1);
+                filter: blur(0);
+              }
+            }
+
+            @keyframes modigulSplashFade {
+              0%, 72% { opacity: 1; }
+              100% { opacity: 0; }
+            }
+
+            .modigul-splash {
+              animation: modigulSplashFade 2.6s ease forwards;
+            }
+
+            .modigul-splash img {
+              animation: modigulLogoReveal 1.35s cubic-bezier(.2,.75,.25,1) both;
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+              .modigul-splash,
+              .modigul-splash img {
+                animation-duration: .01ms;
+              }
+            }
+          `}</style>
+
+          <img
+            src="/modigul-logo.png"
+            alt="Modigul Accounting"
+            className="h-44 w-44 max-h-[42vw] max-w-[42vw] object-contain drop-shadow-2xl"
+          />
+
+          <p className="mt-6 px-6 text-center text-xs font-medium tracking-wide text-[#d9b77b] sm:text-sm">
+            Правообладатель: Mohijamol Akmaljonovna
+          </p>
+        </div>
+      )}
       <div className="no-print mx-auto max-w-6xl px-4 pb-12 pt-5 sm:px-6 sm:pt-8 lg:px-8">
         <header className="mb-7 overflow-hidden rounded-3xl bg-[#450914] text-white shadow-lg">
           <div className="relative p-5 sm:p-8">
