@@ -4,9 +4,9 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Bakery Accounting",
+  title: "Modigul Accounting",
   description: "Расчёт себестоимости, продаж и прибыли кондитерской",
-  applicationName: "Bakery Accounting",
+  applicationName: "Modigul Accounting",
 };
 
 export const viewport: Viewport = {
