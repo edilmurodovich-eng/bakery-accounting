@@ -1320,32 +1320,53 @@ console.log("Изделия:", data);
   setNotice("Продажа сохранена в базе данных.");
   setSaleQuantity("1");
 }
-  function addExpense() {
-    if (
-      !expenseDate ||
-      !expenseName.trim() ||
-      !Number.isFinite(Number(expenseAmount)) ||
-      Number(expenseAmount) <= 0
-    ) {
-      setNotice("Укажите дату, название и положительную сумму расхода.");
-      return;
-    }
-
-    setExpenses((current) => [
-      ...current,
-      {
-        id: Date.now(),
-        date: expenseDate,
-        name: expenseName.trim(),
-        amount: Number(expenseAmount),
-      },
-    ]);
-
-    setExpenseName("");
-    setExpenseAmount("");
-    setNotice("Расход добавлен.");
+  async function addExpense() {
+  if (
+    !expenseDate ||
+    !expenseName.trim() ||
+    !Number.isFinite(Number(expenseAmount)) ||
+    Number(expenseAmount) <= 0
+  ) {
+    setNotice("Укажите дату, название и положительную сумму расхода.");
+    return;
   }
 
+  if (!user) {
+    setNotice("Необходимо войти в аккаунт.");
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("bakery_expenses")
+    .insert({
+      user_id: user.id,
+      expense_date: expenseDate,
+      name: expenseName.trim(),
+      amount: Number(expenseAmount),
+    })
+    .select("id, expense_date, name, amount")
+    .single();
+
+  if (error) {
+    console.error("Ошибка сохранения расхода:", error);
+    setNotice("Не удалось сохранить расход. Попробуйте ещё раз.");
+    return;
+  }
+
+  setExpenses((current) => [
+    ...current,
+    {
+      id: Number(data.id),
+      date: data.expense_date,
+      name: data.name,
+      amount: Number(data.amount),
+    },
+  ]);
+
+  setExpenseName("");
+  setExpenseAmount("");
+  setNotice("Расход сохранён в базе данных.");
+}
   function exportPdf() {
     setNotice("");
     window.setTimeout(() => window.print(), 100);
