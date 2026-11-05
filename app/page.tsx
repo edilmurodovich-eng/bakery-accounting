@@ -1172,7 +1172,7 @@ export default function Home() {
                   Учёт кондитерской
                 </p>
                 <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-                  Bakery Accounting
+                  Modigul Accounting
                 </h1>
               </div>
             </div>
@@ -2061,7 +2061,7 @@ export default function Home() {
       </div>
 
       <div className="print-only">
-        <h1>Bakery Accounting</h1>
+        <h1>Modigul Accounting</h1>
         <h2>Финансовый отчёт кондитерской</h2>
         <p>Период: {reportPeriod}</p>
         <hr />
@@ -2159,7 +2159,7 @@ export default function Home() {
         </table>
 
         <p className="print-footer">
-          Отчёт сформирован в Bakery Accounting. Все суммы указаны в сумах.
+          Отчёт сформирован в Modigul Accounting. Все суммы указаны в сумах.
         </p>
       </div>
     </main>
