@@ -13,7 +13,7 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: "ru",
     icons: [
       {
-        src: "/modigul-logo.png",
+        src: "/modigul-icon.png",
         sizes: "640x640",
         type: "image/png",
         purpose: "any",
