@@ -1,5 +1,5 @@
 
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -21,7 +21,7 @@
 *::before,
 *::after {
   box-sizing: border-box;
-  font-family: "Manrope", sans-serif;
+  font-family: "Cormorant Garamond", sans-serif;
   font-style: normal !important;
 }
 
@@ -35,7 +35,7 @@ body {
   margin: 0;
   background: var(--page-bg);
   color: var(--text-main);
-  font-family: "Manrope", sans-serif;
+  font-family: "Cormorant Garamond", sans-serif;
   font-size: 15px;
   line-height: 1.55;
 }
@@ -126,7 +126,7 @@ textarea:focus-visible {
     margin: 0;
     background: #ffffff !important;
     color: #222222 !important;
-    font-family: "Manrope", sans-serif;
+    font-family: "Cormorant Garamond", sans-serif;
     font-size: 10pt;
   }
 
