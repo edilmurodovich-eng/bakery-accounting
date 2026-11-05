@@ -1539,7 +1539,7 @@ console.log("Изделия:", data);
 
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.23em] text-[#f0d5df]">
-                  Учёт кондитерской
+                  {language === "uz" ? "Qandolatchilik hisobi" : "Учёт кондитерской"}
                 </p>
                 <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
                   Modigul Accounting
@@ -1548,7 +1548,9 @@ console.log("Изделия:", data);
             </div>
 
             <p className="relative mt-5 max-w-lg text-sm leading-6 text-white/75 sm:text-base">
-              Себестоимость, продажи и прибыль — в одном удобном месте.
+              {language === "uz"
+  ? "Tannarx, savdo va foyda — barchasi bir joyda."
+  : "Себестоимость, продажи и прибыль — в одном удобном месте."}
             </p>
 
             <div className="relative mt-5 flex flex-wrap items-center justify-between gap-3">
