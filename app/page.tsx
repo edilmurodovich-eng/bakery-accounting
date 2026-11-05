@@ -1224,7 +1224,25 @@ export default function Home() {
                             }
                           />
                         </label>
-
+{targetYield.trim() !== "" &&
+  Number(targetYield) > 0 &&
+  Number(yieldCount) > 0 && (
+    <p className="mt-2 text-xs font-semibold text-[#781f3b]">
+      Для {targetYield} изделий:{" "}
+      {(
+        (Number(item.amount) || 0) * yieldMultiplier
+      ).toLocaleString("ru-RU", {
+        maximumFractionDigits: 2,
+      })}{" "}
+      {item.unit === "pcs"
+        ? "шт."
+        : item.unit === "ml"
+          ? "мл"
+          : item.unit === "kg"
+            ? "кг"
+            : "г"}
+    </p>
+  )}
                         <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                           Единица
                           <select
