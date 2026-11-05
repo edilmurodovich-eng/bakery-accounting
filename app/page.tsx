@@ -846,6 +846,47 @@ export default function Home() {
       cancelled = true;
     };
   }, [user]);
+    useEffect(() => {
+    if (!user) {
+      setSales([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadSales() {
+      const { data, error } = await supabase
+        .from("bakery_sales")
+        .select("id, sale_date, product_id, product_name, quantity, price, cost")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: true });
+
+      if (cancelled) return;
+
+      if (error) {
+        console.error("Ошибка загрузки продаж:", error);
+        return;
+      }
+
+      setSales(
+        (data ?? []).map((item) => ({
+          id: Number(item.id),
+          date: item.sale_date,
+          productId: Number(item.product_id),
+          productName: item.product_name,
+          quantity: Number(item.quantity),
+          price: Number(item.price),
+          cost: Number(item.cost),
+        }))
+      );
+    }
+
+    loadSales();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
   const [saleDate, setSaleDate] = useState(today());
   const [saleProductId, setSaleProductId] = useState("");
   const [saleQuantity, setSaleQuantity] = useState("1");
