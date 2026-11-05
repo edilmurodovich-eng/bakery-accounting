@@ -1110,7 +1110,19 @@ export default function Home() {
                   ? "Ищем подходящий рецепт..."
                   : "Найти классический рецепт"}
               </button>
-
+<label className="mt-3 block min-w-0 text-xs font-semibold text-[#6f5b4e]">
+  Сколько изделий нужно приготовить?
+  <input
+    className={`${field} mt-1.5`}
+    type="number"
+    min="1"
+    step="1"
+    inputMode="numeric"
+    placeholder="Введите количество"
+    value={targetYield}
+    onChange={(e) => setTargetYield(e.target.value)}
+  />
+</label>
               {recipeSearchError && (
                 <p
                   role="status"
@@ -1319,21 +1331,7 @@ export default function Home() {
     />
   </label>
 
-  <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
-    Сколько изделий нужно приготовить?
-    <input
-      className={`${field} mt-1.5`}
-      type="number"
-      min="1"
-      step="1"
-      inputMode="numeric"
-      placeholder="Введите количество"
-      value={targetYield}
-      onChange={(e) => setTargetYield(e.target.value)}
-    />
-  </label>
-
-  <div className="rounded-xl bg-[#f1e5ea] p-4">
+ <div className="rounded-xl bg-[#f1e5ea] p-4">
     <span className="text-xs font-medium text-[#765666]">
       Общая стоимость ингредиентов
     </span>
