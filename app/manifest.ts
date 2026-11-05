@@ -3,8 +3,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Bakery Accounting",
-    short_name: "Bakery",
+    name: "Modigul Accounting",
+short_name: "Modigul",
     description: "Расчёт себестоимости, продаж и прибыли кондитерской",
     start_url: "/",
     display: "standalone",
