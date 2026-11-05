@@ -12,7 +12,6 @@ import {
   ShoppingBag,
   TrendingUp,
   ReceiptText,
-  Wheat,
   CircleDollarSign,
   Flame,
   Search,
@@ -1158,34 +1157,26 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#f5eef1] text-[#35252c]">
       <div className="no-print mx-auto max-w-6xl px-4 pb-12 pt-5 sm:px-6 sm:pt-8 lg:px-8">
-        <header className="mb-7 overflow-hidden rounded-3xl bg-[#58152b] text-white shadow-lg">
+        <header className="mb-7 overflow-hidden rounded-3xl bg-[#450914] text-white shadow-lg">
           <div className="relative p-5 sm:p-8">
             <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full border border-white/10" />
 
-           <div className="relative flex items-center gap-4">
-  <img
-    src="/modigul-logo.png"
-    alt="Modigul Accounting"
-    className="h-20 w-20 shrink-0 rounded-full object-cover sm:h-24 sm:w-24"
-  />
+            <div className="relative flex items-center gap-4">
+              <img
+                src="/modigul-logo.png"
+                alt="Modigul Accounting"
+                className="h-20 w-20 shrink-0 rounded-full object-cover sm:h-24 sm:w-24"
+              />
 
-  <div className="min-w-0">
-    <p className="text-[10px] font-bold uppercase tracking-[0.23em] text-[#f0d5df]">
-      Учёт кондитерской
-    </p>
-    <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-      Modigul Accounting
-    </h1>
-  </div>
-</div>
-    <p className="text-[10px] font-bold uppercase tracking-[0.23em] text-[#f0d5df]">
-      Учёт кондитерской
-    </p>
-    <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-      Modigul Accounting
-    </h1>
-  </div>
-</div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.23em] text-[#f0d5df]">
+                  Учёт кондитерской
+                </p>
+                <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+                  Modigul Accounting
+                </h1>
+              </div>
+            </div>
 
             <p className="relative mt-5 max-w-lg text-sm leading-6 text-white/75 sm:text-base">
               Себестоимость, продажи и прибыль — в одном удобном месте.
