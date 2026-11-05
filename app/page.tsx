@@ -1217,45 +1217,69 @@ export default function Home() {
   setManualCost("");
   setNotice("Изделие сохранено в базе данных.");
 }
-  function addSale() {
-    const product = products.find(
-      (item) => item.id === Number(saleProductId)
-    );
+  async function addSale() {
+  const product = products.find(
+    (item) => item.id === Number(saleProductId)
+  );
 
-    if (!product) {
-      setNotice("Сначала добавьте изделие в калькуляторе.");
-      return;
-    }
-
-    if (
-      !saleDate ||
-      !Number.isFinite(Number(saleQuantity)) ||
-      Number(saleQuantity) <= 0 ||
-      !salePrice.trim() ||
-      !Number.isFinite(Number(salePrice)) ||
-      Number(salePrice) < 0
-    ) {
-      setNotice("Проверьте дату, количество и цену продажи.");
-      return;
-    }
-
-    setSales((current) => [
-      ...current,
-      {
-        id: Date.now(),
-        date: saleDate,
-        productId: product.id,
-        productName: product.name,
-        quantity: Number(saleQuantity),
-        price: Number(salePrice),
-        cost: product.cost,
-      },
-    ]);
-
-    setNotice("Продажа добавлена.");
-    setSaleQuantity("1");
+  if (!product) {
+    setNotice("Сначала добавьте изделие в калькуляторе.");
+    return;
   }
 
+  if (
+    !saleDate ||
+    !Number.isFinite(Number(saleQuantity)) ||
+    Number(saleQuantity) <= 0 ||
+    !salePrice.trim() ||
+    !Number.isFinite(Number(salePrice)) ||
+    Number(salePrice) < 0
+  ) {
+    setNotice("Проверьте дату, количество и цену продажи.");
+    return;
+  }
+
+  if (!user) {
+    setNotice("Необходимо войти в аккаунт.");
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("bakery_sales")
+    .insert({
+      user_id: user.id,
+      sale_date: saleDate,
+      product_id: product.id,
+      product_name: product.name,
+      quantity: Number(saleQuantity),
+      price: Number(salePrice),
+      cost: product.cost,
+    })
+    .select("id, sale_date, product_id, product_name, quantity, price, cost")
+    .single();
+
+  if (error) {
+    console.error("Ошибка сохранения продажи:", error);
+    setNotice("Не удалось сохранить продажу. Попробуйте ещё раз.");
+    return;
+  }
+
+  setSales((current) => [
+    ...current,
+    {
+      id: Number(data.id),
+      date: data.sale_date,
+      productId: Number(data.product_id),
+      productName: data.product_name,
+      quantity: Number(data.quantity),
+      price: Number(data.price),
+      cost: Number(data.cost),
+    },
+  ]);
+
+  setNotice("Продажа сохранена в базе данных.");
+  setSaleQuantity("1");
+}
   function addExpense() {
     if (
       !expenseDate ||
