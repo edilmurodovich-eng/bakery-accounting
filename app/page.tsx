@@ -2168,15 +2168,27 @@ console.log("Изделия:", data);
       return;
     }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("bakery_products")
       .delete()
       .eq("id", product.id)
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .select("id")
+      .maybeSingle();
 
     if (error) {
       console.error("Ошибка удаления изделия:", error);
       setNotice(t(`Ошибка удаления: ${error.message}`, `Öçirişda xatolik: ${error.message}`));
+      return;
+    }
+
+    if (!data) {
+      setNotice(
+        t(
+          "Изделие не удалено. Запись не найдена или нет прав на удаление.",
+          "Mahsulot öçirilmadi. Yozuv topilmadi yoki öçirişga ruxsat yöq."
+        )
+      );
       return;
     }
 
