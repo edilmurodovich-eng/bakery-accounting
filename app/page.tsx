@@ -1307,83 +1307,6 @@ console.log("Изделия:", data);
   setManualCost("");
   setNotice(t("Изделие сохранено в базе данных.", "Mahsulot bazaga saqlandi."));
 }
-
-  async function deleteProduct(product: Product) {
-    if (!user) {
-      setNotice(t("Необходимо войти в аккаунт.", "Hisobga kiriş kerak."));
-      return;
-    }
-
-    const confirmed = window.confirm(
-      t(
-        `Удалить изделие «${product.name}»?`,
-        `«${product.name}» mahsulotini öçirmoqchimisiz?`
-      )
-    );
-
-    if (!confirmed) return;
-
-    // Не удаляем изделие, если по нему уже есть продажи:
-    // история продаж должна оставаться целой.
-    const { count, error: salesCheckError } = await supabase
-      .from("bakery_sales")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("product_id", product.id);
-
-    if (salesCheckError) {
-      console.error("Ошибка проверки продаж изделия:", salesCheckError);
-      setNotice(
-        t(
-          `Не удалось проверить продажи изделия: ${salesCheckError.message}`,
-          `Mahsulot savdolarini tekşirib bölmadi: ${salesCheckError.message}`
-        )
-      );
-      return;
-    }
-
-    if ((count ?? 0) > 0) {
-      setNotice(
-        t(
-          "Это изделие нельзя удалить: по нему уже есть продажи. Сначала удалите связанные продажи.",
-          "Bu mahsulotni öçirib bölmaydi: u bo‘yicha savdolar mavjud. Avval tegishli savdolarni öchiring."
-        )
-      );
-      return;
-    }
-
-    const { error } = await supabase
-      .from("bakery_products")
-      .delete()
-      .eq("id", product.id)
-      .eq("user_id", user.id);
-
-    if (error) {
-      console.error("Ошибка удаления изделия:", error);
-      setNotice(
-        t(
-          `Ошибка удаления: ${error.message}`,
-          `Öçirishda xatolik: ${error.message}`
-        )
-      );
-      return;
-    }
-
-    setProducts((current) => current.filter((item) => item.id !== product.id));
-
-    if (saleProductId === String(product.id)) {
-      setSaleProductId("");
-      setSalePrice("");
-    }
-
-    setNotice(
-      t(
-        "Изделие удалено из базы данных.",
-        "Mahsulot bazadan öçirildi."
-      )
-    );
-  }
-
   async function addSale() {
   const product = products.find(
     (item) => item.id === Number(saleProductId)
@@ -2239,14 +2162,35 @@ console.log("Изделия:", data);
                       </div>
 
                       <button
-                        type="button"
-                        onClick={() => deleteProduct(product)}
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#a56b7a] hover:bg-[#f8e9ee]"
-                        aria-label={t("Удалить изделие", "Mahsulotni öçiriş")}
-                        title={t("Удалить изделие", "Mahsulotni öçirish")}
-                      >
-                        <Trash2 size={17} />
-                      </button>
+  onClick={async () => {
+    if (!user) {
+      setNotice(t("Необходимо войти в аккаунт.", "Hisobga kiriş kerak."));
+      return;
+    }
+
+    const { error } = await supabase
+      .from("bakery_products")
+      .delete()
+      .eq("id", product.id)
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.error("Ошибка удаления изделия:", error);
+      setNotice(t(`Ошибка удаления: ${error.message}`, `Öçirişda xatolik: ${error.message}`));
+      return;
+    }
+
+    setProducts((current) =>
+      current.filter((p) => p.id !== product.id)
+    );
+
+    setNotice(t("Изделие удалено из базы данных.", "Mahsulot bazadan öçirildi."));
+  }}
+  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#a56b7a] hover:bg-[#f8e9ee]"
+  aria-label={t("Удалить изделие", "Mahsulotni öçiriş")}
+>
+  <Trash2 size={17} />
+</button>
                     </div>
                   ))}
                 </div>
@@ -2280,49 +2224,27 @@ console.log("Изделия:", data);
                   />
                 </label>
 
-                <div className="min-w-0 text-xs font-semibold text-[#6f5b4e]">
-                  <label className="block">
-                    {t("Изделие", "Mahsulot")}
-                    <div className="mt-1.5 flex min-w-0 gap-2">
-                      <select
-                        className={`${field} min-w-0 flex-1`}
-                        value={saleProductId}
-                        onChange={(e) => {
-                          setSaleProductId(e.target.value);
-                          const selected = products.find(
-                            (p) => p.id === Number(e.target.value)
-                          );
-                          if (selected) setSalePrice(String(selected.price));
-                          else setSalePrice("");
-                        }}
-                      >
-                        <option value="">{t("Выберите изделие", "Mahsulotni tanlang")}</option>
-                        {products.map((product) => (
-                          <option key={product.id} value={product.id}>
-                            {product.name}
-                          </option>
-                        ))}
-                      </select>
-
-                      <button
-                        type="button"
-                        disabled={!saleProductId}
-                        onClick={() => {
-                          const selected = products.find(
-                            (product) => product.id === Number(saleProductId)
-                          );
-
-                          if (selected) deleteProduct(selected);
-                        }}
-                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#e8dce1] bg-white text-[#a56b7a] transition hover:bg-[#f8e9ee] disabled:cursor-not-allowed disabled:opacity-35"
-                        aria-label={t("Удалить выбранное изделие", "Tanlangan mahsulotni öchirish")}
-                        title={t("Удалить выбранное изделие", "Tanlangan mahsulotni öchirish")}
-                      >
-                        <Trash2 size={17} />
-                      </button>
-                    </div>
-                  </label>
-                </div>
+                <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
+                  {t("Изделие", "Mahsulot")}
+                  <select
+                    className={`${field} mt-1.5`}
+                    value={saleProductId}
+                    onChange={(e) => {
+                      setSaleProductId(e.target.value);
+                      const selected = products.find(
+                        (p) => p.id === Number(e.target.value)
+                      );
+                      if (selected) setSalePrice(String(selected.price));
+                    }}
+                  >
+                    <option value="">{t("Выберите изделие", "Mahsulotni tanlang")}</option>
+                    {products.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
                 <label className="block min-w-0 text-xs font-semibold text-[#6f5b4e]">
                   {t("Количество", "Miqdori")}
@@ -2550,12 +2472,51 @@ console.log("Изделия:", data);
                         </p>
 
                         <button
-                          className="mt-2 text-xs text-[#a56b7a] underline"
-                          onClick={() =>
+                          className="mt-2 text-xs text-[#a56b7a] underline disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={!user}
+                          onClick={async () => {
+                            if (!user) {
+                              setNotice(t("Необходимо войти в аккаунт.", "Hisobga kiriş kerak."));
+                              return;
+                            }
+
+                            const confirmed = window.confirm(
+                              t(
+                                `Удалить продажу «${sale.productName}» из базы данных?`,
+                                `«${sale.productName}» savdosini bazadan öçirasizmi?`
+                              )
+                            );
+
+                            if (!confirmed) return;
+
+                            const { error } = await supabase
+                              .from("bakery_sales")
+                              .delete()
+                              .eq("id", sale.id)
+                              .eq("user_id", user.id);
+
+                            if (error) {
+                              console.error("Ошибка удаления продажи:", error);
+                              setNotice(
+                                t(
+                                  `Ошибка удаления продажи: ${error.message}`,
+                                  `Savdoni öçirişda xatolik: ${error.message}`
+                                )
+                              );
+                              return;
+                            }
+
                             setSales((current) =>
                               current.filter((item) => item.id !== sale.id)
-                            )
-                          }
+                            );
+
+                            setNotice(
+                              t(
+                                "Продажа удалена из базы данных.",
+                                "Savdo bazadan öçirildi."
+                              )
+                            );
+                          }}
                         >
                           {t("Удалить", "Öçiriş")}
                         </button>
